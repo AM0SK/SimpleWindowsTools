@@ -72,7 +72,7 @@ jobs:
             $items = [regex]::Matches($block, "new\[\]\s*\{\s*$str,\s*$str\s*\}")
             foreach ($m in $items) { $notes += "- " + $m.Groups[2].Value }
           }
-          if ($notes.Count -eq 0) { $notes = @("- See “Update history” in the app.") }
+          if ($notes.Count -eq 0) { $notes = @('- See Update history in the app.') }
           $body = ($notes -join "`n") + "`n`n**Download:** SimpleWindowsTools-Setup.exe below. Already installed? The app shows an update notification."
           Set-Content notes.md $body -Encoding utf8
 
