@@ -18,7 +18,7 @@
             <Border.RenderTransformOrigin>0.5,0.5</Border.RenderTransformOrigin>
             <Grid>
                 <Border x:Name="Glow" Background="{DynamicResource TopGlow}" />
-                <TextBlock x:Name="Label" Text="EN" Margin="28,10" MinWidth="64" TextAlignment="Center"
+                <TextBlock x:Name="Label" Text="EN" Margin="28,10" MinWidth="64" TextAlignment="Center" VerticalAlignment="Center"
                            FontFamily="{StaticResource FontDisplay}" FontWeight="Bold" FontSize="18"
                            Foreground="{DynamicResource Ink}" />
             </Grid>

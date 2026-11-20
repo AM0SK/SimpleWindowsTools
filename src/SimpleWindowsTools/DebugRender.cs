@@ -63,7 +63,8 @@ internal static class DebugRender
         overlay.Label.Text = "RU";
         overlay.Pill.Opacity = 1;
         var gray = new SolidColorBrush(Color.FromRgb(0x3A, 0x3F, 0x4A));
-        Save((FrameworkElement)overlay.Content, 200, 90, gray, Path.Combine(dir, "overlay.png"));
+        var pillSize = PillSize(overlay);
+        Save((FrameworkElement)overlay.Content, pillSize.Width, pillSize.Height, gray, Path.Combine(dir, "overlay.png"));
         overlay.Close();
 
         // Screenshot editor over the rendered settings picture
@@ -130,8 +131,10 @@ internal static class DebugRender
 
         var overlay = new OverlayWindow();
         overlay.Label.Text = "EN";
+        overlay.Label.FontSize = new Core.AppSettings().OverlayFontSize; // what a new install shows
         overlay.Pill.Opacity = 1;
-        Save((FrameworkElement)overlay.Content, 200, 90, new SolidColorBrush(Color.FromRgb(0x3A, 0x3F, 0x4A)), Path.Combine(dir, "layout-pill.png"));
+        var size = PillSize(overlay);
+        Save((FrameworkElement)overlay.Content, size.Width, size.Height, new SolidColorBrush(Color.FromRgb(0x3A, 0x3F, 0x4A)), Path.Combine(dir, "layout-pill.png"));
         overlay.Close();
 
         var setup = new SimpleWindowsTools.Setup.InstallerWindow();
@@ -139,6 +142,14 @@ internal static class DebugRender
         setup.Close();
 
         try { Directory.Delete(temp, recursive: true); } catch { }
+    }
+
+    /// <summary>The overlay window sizes to its content; render it at that size, not stretched into a box.</summary>
+    private static Size PillSize(OverlayWindow overlay)
+    {
+        var content = (FrameworkElement)overlay.Content;
+        content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        return new Size(System.Math.Ceiling(content.DesiredSize.Width), System.Math.Ceiling(content.DesiredSize.Height));
     }
 
     /// <summary>Switch thumbs move by a storyboard, which doesn't run in an offscreen render — set the end state.</summary>
