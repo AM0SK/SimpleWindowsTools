@@ -101,7 +101,7 @@ internal static class DebugRender
         Core.SettingsStore.Folder = temp; // defaults, not the user's own settings
         Core.Loc.Set(Core.UiLanguage.En);
         using var app = new AppController();
-        app.Settings.SkippedLanguages.Add(0x0422); // show UA as skipped, like a typical setup
+        app.Settings.SkippedLanguages.Add(0x0419); // show RU as skipped
         app.ForgetHotkeyConflicts();
 
         var bg = (Brush)Application.Current.Resources["Surface0"];
