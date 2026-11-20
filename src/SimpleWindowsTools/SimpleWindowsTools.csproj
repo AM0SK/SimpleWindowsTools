@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Only for NotifyIcon (tray). WPF has no tray icon of its own. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- Off: WPF and WinForms both define Application, Button, etc. Usings are explicit in every file. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>SimpleWindowsTools</RootNamespace>
+    <AssemblyName>SimpleWindowsTools</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <Version>0.6.3</Version>
+    <Product>Simple Windows Tools</Product>
+    <!-- File description = the name Task Manager shows in Startup apps -->
+    <AssemblyTitle>Simple Windows Tools</AssemblyTitle>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- DPI awareness is set in app.manifest for WPF; the WinForms tray menu just follows it. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+  </PropertyGroup>
+
+  <!-- Installer for other machines: dotnet publish ... -p:SetupBuild=true (see CLAUDE.md).
+       Self-contained, so .NET doesn't need to be installed there. -->
+  <PropertyGroup Condition="'$(SetupBuild)' == 'true'">
+    <DefineConstants>$(DefineConstants);SETUP</DefineConstants>
+    <SelfContained>true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <!-- No compression: a compressed bundle unpacks .NET into the app's own memory (hundreds of MB of
+         commit); uncompressed, Windows maps it from the exe and shares it. Bigger download, less RAM. -->
+    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+</Project>

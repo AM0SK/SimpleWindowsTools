@@ -1,0 +1,151 @@
+<Window x:Class="SimpleWindowsTools.Screenshot.ScreenshotWindow" x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{DynamicResource S.Shot.Title}" WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
+        Background="Black" UseLayoutRounding="True" SnapsToDevicePixels="True"
+        PreviewKeyDown="Window_PreviewKeyDown" PreviewKeyUp="Window_PreviewKeyUp">
+
+    <Window.Resources>
+        <!-- Tool / color toggle on the toolbar -->
+        <Style x:Key="ToolRadio" TargetType="RadioButton">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkMuted}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bg" CornerRadius="{StaticResource RadiusSm}" Background="Transparent" BorderThickness="1" BorderBrush="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource Surface200}" />
+                                <Setter Property="Foreground" Value="{DynamicResource Ink}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource PillAccentBg}" />
+                                <Setter TargetName="Bg" Property="BorderBrush" Value="{DynamicResource PillAccentRing}" />
+                                <Setter Property="Foreground" Value="{DynamicResource AccentSolid}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ToolIcon" TargetType="Path">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="StrokeThickness" Value="1.8" />
+            <Setter Property="StrokeStartLineCap" Value="Round" />
+            <Setter Property="StrokeEndLineCap" Value="Round" />
+            <Setter Property="StrokeLineJoin" Value="Round" />
+            <Setter Property="Stroke" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+        </Style>
+
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Foreground" Value="{DynamicResource Ink}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" CornerRadius="{StaticResource RadiusSm}" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Opacity" Value="0.85" />
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource Surface200}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="Sep" TargetType="Border">
+            <Setter Property="Width" Value="1" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Margin" Value="6,0" />
+            <Setter Property="Background" Value="{DynamicResource Border}" />
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="Root" Background="Black" Cursor="Cross"
+          MouseLeftButtonDown="Root_MouseDown" MouseMove="Root_MouseMove" MouseLeftButtonUp="Root_MouseUp"
+          MouseWheel="Root_MouseWheel">
+
+        <Image x:Name="Shot" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+        <!-- Darkens everything outside the selection -->
+        <Path x:Name="Dim" Fill="#8C000000" IsHitTestVisible="False" />
+
+        <!-- Drawn elements, clipped to the selection -->
+        <Canvas x:Name="Layer" HorizontalAlignment="Left" VerticalAlignment="Top">
+            <Rectangle x:Name="TextDraft" Visibility="Collapsed" Stroke="White" StrokeThickness="1" StrokeDashArray="4 3" IsHitTestVisible="False" />
+        </Canvas>
+
+        <!-- Selection frame, crosshair, size, handles -->
+        <Canvas x:Name="Chrome" IsHitTestVisible="False" RenderOptions.EdgeMode="Aliased">
+            <Line x:Name="CrossH" Stroke="#40FFFFFF" />
+            <Line x:Name="CrossV" Stroke="#40FFFFFF" />
+            <Rectangle x:Name="SelDark" Stroke="#B3000000" />
+            <Rectangle x:Name="SelLight" Stroke="White" StrokeDashArray="4 4" />
+            <Rectangle x:Name="PickedBounds" Stroke="#CCFFFFFF" StrokeDashArray="3 3" Visibility="Collapsed" />
+            <Rectangle x:Name="HandleTL" Width="7" Height="7" Fill="White" Stroke="#B3000000" />
+            <Rectangle x:Name="HandleTR" Width="7" Height="7" Fill="White" Stroke="#B3000000" />
+            <Rectangle x:Name="HandleBL" Width="7" Height="7" Fill="White" Stroke="#B3000000" />
+            <Rectangle x:Name="HandleBR" Width="7" Height="7" Fill="White" Stroke="#B3000000" />
+            <Border x:Name="SizeLabel" Background="{DynamicResource LabelBg}" BorderBrush="{DynamicResource Border}" BorderThickness="1"
+                    CornerRadius="6" Padding="7,2" RenderOptions.EdgeMode="Unspecified">
+                <TextBlock x:Name="SizeText" FontFamily="{StaticResource FontMono}" FontSize="12" Foreground="{DynamicResource Ink}" />
+            </Border>
+        </Canvas>
+
+        <!-- Hint before anything is selected -->
+        <Border x:Name="Hint" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                Background="{DynamicResource LabelBg}" BorderBrush="{DynamicResource Border}" BorderThickness="1" Padding="18,9"
+                SizeChanged="Hint_SizeChanged">
+            <TextBlock Style="{StaticResource Text}"
+                       Text="{DynamicResource Sh.Hint}" />
+        </Border>
+
+        <!-- Toolbar -->
+        <Canvas>
+            <Border x:Name="Toolbar" Visibility="Collapsed" Background="{DynamicResource ToolbarBg}" BorderBrush="{DynamicResource Border}" BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusMd}" Padding="5" Cursor="Arrow">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="18" ShadowDepth="3" Opacity="0.5" Color="Black" />
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal">
+                    <!-- Drawing tools: built in code in the user's order (drag to reorder; 1–6 follow the order) -->
+                    <StackPanel x:Name="Tools" Orientation="Horizontal" />
+
+                    <Border Style="{StaticResource Sep}" />
+                    <StackPanel x:Name="Swatches" Orientation="Horizontal" />
+                    <Border Style="{StaticResource Sep}" />
+
+                    <TextBlock x:Name="SizeValue" MinWidth="44" TextAlignment="Center" VerticalAlignment="Center"
+                               FontFamily="{StaticResource FontMono}" FontSize="12" Foreground="{DynamicResource InkMuted}"
+                               ToolTip="{DynamicResource Sh.Size}" />
+
+                    <Border Style="{StaticResource Sep}" />
+                    <Button Style="{StaticResource ActionButton}" Content="&#xE8C8;" Click="Copy_Click" ToolTip="{DynamicResource Sh.Copy}" />
+                    <Button Style="{StaticResource ActionButton}" Content="&#xE74E;" Click="Save_Click" ToolTip="{DynamicResource Sh.Save}" />
+                    <Button Style="{StaticResource ActionButton}" Content="&#xE711;" Click="Close_Click" ToolTip="{DynamicResource Sh.Close}" />
+                </StackPanel>
+            </Border>
+        </Canvas>
+    </Grid>
+</Window>

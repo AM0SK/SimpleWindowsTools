@@ -1,0 +1,26 @@
+<!--
+  Design tokens: fonts, radii, motion (colors are in Dark.xaml).
+  Inter / Space Grotesk are usually not installed, so each family falls back to Segoe UI Variable,
+  the closest system face.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- Colors live in Dark.xaml / Light.xaml (swapped by Theme.cs). -->
+
+    <!-- Type -->
+    <FontFamily x:Key="FontDisplay">Space Grotesk, Segoe UI Variable Display, Segoe UI</FontFamily>
+    <FontFamily x:Key="FontSans">Inter, Segoe UI Variable Text, Segoe UI</FontFamily>
+    <FontFamily x:Key="FontMono">JetBrains Mono, Cascadia Mono, Consolas</FontFamily>
+
+    <!-- Radii: sm 8, md 12, lg 16, xl 20 -->
+    <CornerRadius x:Key="RadiusSm">8</CornerRadius>
+    <CornerRadius x:Key="RadiusMd">12</CornerRadius>
+    <CornerRadius x:Key="RadiusLg">16</CornerRadius>
+    <CornerRadius x:Key="RadiusXl">20</CornerRadius>
+
+    <!-- Motion: micro 100 ms, macro 320 ms -->
+    <Duration x:Key="Micro">0:0:0.1</Duration>
+    <Duration x:Key="Macro">0:0:0.32</Duration>
+</ResourceDictionary>

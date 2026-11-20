@@ -1,0 +1,315 @@
+<Window x:Class="SimpleWindowsTools.UI.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:SimpleWindowsTools.UI"
+        Title="Simple Windows Tools" Width="640" Height="720" MinWidth="560" MinHeight="480"
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource Surface0}"
+        Icon="pack://application:,,,/Assets/app.ico"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="56" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Grid>
+        <!-- Violet glow from the top, as in the web app -->
+        <Border Background="{DynamicResource TopGlow}" IsHitTestVisible="False" />
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="56" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- ===== Title bar ===== -->
+            <Grid Grid.Row="0" Margin="20,0,10,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="24" Height="24" CornerRadius="7" Background="{DynamicResource AccentGradient}">
+                        <Border Width="12" Height="9" CornerRadius="2.5" BorderBrush="White" BorderThickness="1.6"
+                                HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="Simple Windows Tools" Style="{StaticResource H1}" Margin="10,0,0,1" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Style="{StaticResource CaptionButton}" Content="&#xE921;" Click="Minimize_Click" ToolTip="{DynamicResource S.Minimize}" />
+                    <Button Style="{StaticResource CaptionButton}" Content="&#xE8BB;" Click="Close_Click" ToolTip="{DynamicResource S.CloseWindow}" />
+                </StackPanel>
+            </Grid>
+
+            <!-- ===== Tabs ===== -->
+            <Border Grid.Row="1" HorizontalAlignment="Left" Margin="20,0,20,10" Padding="3" CornerRadius="{StaticResource RadiusMd}"
+                    Background="{DynamicResource PillNeutralBg}" BorderBrush="{DynamicResource PillNeutralRing}" BorderThickness="1">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton x:Name="TabFeatures" GroupName="tabs" Style="{StaticResource TabButton}" IsChecked="True"
+                                 Content="{DynamicResource S.Tab.Features}" Checked="Tab_Checked" />
+                    <RadioButton x:Name="TabApp" GroupName="tabs" Style="{StaticResource TabButton}"
+                                 Content="{DynamicResource S.Tab.App}" Checked="Tab_Checked" />
+                </StackPanel>
+            </Border>
+
+            <!-- ===== Content ===== -->
+            <ScrollViewer x:Name="Scroll" Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="20,2,14,20">
+                <StackPanel Margin="0,0,6,0">
+
+                    <!-- ===== Tab 1: features ===== -->
+                    <StackPanel x:Name="FeaturesPage">
+                        <!-- Warning: AutoHotkey still running -->
+                        <Border x:Name="AhkWarning" Visibility="Collapsed" Style="{StaticResource Card}"
+                                Background="{DynamicResource PillWarnBg}" BorderBrush="{DynamicResource PillWarnRing}" Padding="16,12">
+                            <TextBlock Style="{StaticResource Text}" Foreground="{DynamicResource Warning}" Text="{DynamicResource S.AhkWarning}" />
+                        </Border>
+
+                        <TextBlock Text="{DynamicResource S.Modules}" Style="{StaticResource SectionLabel}" Margin="4,8,0,8" />
+
+                        <!-- ===== Layout overlay ===== -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource S.Overlay.Title}" Style="{StaticResource CardTitle}" />
+                                        <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,10" Text="{DynamicResource S.Overlay.Text}" />
+                                        <ui:HotkeyEditor x:Name="OverlayHotkey" />
+                                    </StackPanel>
+                                    <CheckBox x:Name="OverlaySwitch" Grid.Column="1" Style="{StaticResource Switch}" VerticalAlignment="Top" Margin="16,2,0,0"
+                                              Click="OverlaySwitch_Click" />
+                                </Grid>
+
+                                <StackPanel x:Name="OverlayOptions">
+                                    <Border Style="{StaticResource Divider}" />
+
+                                    <Grid Margin="0,0,0,14">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="140" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="64" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{DynamicResource S.Overlay.Duration}" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                                        <Slider x:Name="DurationSlider" Grid.Column="1" Style="{StaticResource AppSlider}"
+                                                Minimum="400" Maximum="3000" TickFrequency="100" ValueChanged="Look_Changed" />
+                                        <TextBlock x:Name="DurationText" Grid.Column="2" Style="{StaticResource Text}" FontFamily="{StaticResource FontMono}"
+                                                   FontSize="12" TextAlignment="Right" VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="140" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="64" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{DynamicResource S.Overlay.FontSize}" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                                        <Slider x:Name="FontSlider" Grid.Column="1" Style="{StaticResource AppSlider}"
+                                                Minimum="12" Maximum="40" TickFrequency="1" ValueChanged="Look_Changed" />
+                                        <TextBlock x:Name="FontText" Grid.Column="2" Style="{StaticResource Text}" FontFamily="{StaticResource FontMono}"
+                                                   FontSize="12" TextAlignment="Right" VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <Button Content="{DynamicResource S.Overlay.Preview}" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left"
+                                            Click="Preview_Click" />
+                                </StackPanel>
+
+                                <!-- Skip languages: works even with the pill turned off -->
+                                <Border Style="{StaticResource Divider}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource S.Skip.Title}" Style="{StaticResource CardTitle}" FontSize="14" />
+                                        <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,0" Text="{DynamicResource S.Skip.Text}" />
+                                    </StackPanel>
+                                    <CheckBox x:Name="SkipSwitch" Grid.Column="1" Style="{StaticResource Switch}" VerticalAlignment="Top" Margin="16,2,0,0"
+                                              Click="SkipSwitch_Click" />
+                                </Grid>
+                                <WrapPanel x:Name="SkipLanguages" Margin="0,12,0,0" />
+                                <ui:HotkeyEditor x:Name="SkipHotkey" Margin="0,12,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ===== Win blocker ===== -->
+                        <Border Style="{StaticResource Card}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource S.Win.Title}" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,10" Text="{DynamicResource S.Win.Text}" />
+                                    <ui:HotkeyEditor x:Name="WinHotkey" />
+                                </StackPanel>
+                                <CheckBox x:Name="WinSwitch" Grid.Column="1" Style="{StaticResource Switch}" VerticalAlignment="Top" Margin="16,2,0,0"
+                                          Click="WinSwitch_Click" />
+                            </Grid>
+                        </Border>
+
+                        <!-- ===== Em dash ===== -->
+                        <Border Style="{StaticResource Card}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource S.Dash.Title}" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,10" Text="{DynamicResource S.Dash.Text}" />
+                                    <ui:HotkeyEditor x:Name="DashHotkey" />
+                                </StackPanel>
+                                <CheckBox x:Name="DashSwitch" Grid.Column="1" Style="{StaticResource Switch}" VerticalAlignment="Top" Margin="16,2,0,0"
+                                          Click="DashSwitch_Click" />
+                            </Grid>
+                        </Border>
+
+                        <!-- ===== Screenshot ===== -->
+                        <Border Style="{StaticResource Card}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource S.Shot.Title}" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,10" Text="{DynamicResource S.Shot.Text}" />
+                                    <ui:HotkeyEditor x:Name="ShotHotkey" />
+                                </StackPanel>
+                                <!-- Toolbar order: drag the chips; the number is the tool's key in the editor -->
+                                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,16,0,0">
+                                    <TextBlock Text="{DynamicResource S.Shot.Tools}" Style="{StaticResource Text}" FontWeight="SemiBold" />
+                                    <TextBlock Text="{DynamicResource S.Shot.ToolsText}" Style="{StaticResource Muted}" Margin="0,2,0,8" />
+                                    <StackPanel x:Name="ShotTools" Orientation="Horizontal" HorizontalAlignment="Left" />
+                                </StackPanel>
+                                <!-- Full card width, under the switch column too -->
+                                <Expander Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource Accordion}" Header="{DynamicResource S.Shot.AllCommands}" Margin="0,14,0,0">
+                                    <StackPanel x:Name="ShotHelp" />
+                                </Expander>
+                                <CheckBox x:Name="ShotSwitch" Grid.Column="1" Style="{StaticResource Switch}" VerticalAlignment="Top" Margin="16,2,0,0"
+                                          Click="ShotSwitch_Click" />
+                            </Grid>
+                        </Border>
+
+                    </StackPanel>
+
+                    <!-- ===== Tab 2: the app itself ===== -->
+                    <StackPanel x:Name="AppPage" Visibility="Collapsed">
+                        <TextBlock Text="{DynamicResource S.Interface}" Style="{StaticResource SectionLabel}" Margin="4,8,0,8" />
+
+                        <!-- ===== Interface language ===== -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="{DynamicResource S.Language.Title}" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="{DynamicResource S.Language.Text}" Style="{StaticResource Muted}" Margin="0,4,0,0" />
+                                <WrapPanel x:Name="UiLanguages" Margin="0,12,0,0" />
+                            </StackPanel>
+                        </Border>
+
+
+                        <TextBlock Text="{DynamicResource S.System}" Style="{StaticResource SectionLabel}" Margin="4,12,0,8" />
+
+                        <!-- ===== System ===== -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource S.Autostart.Title}" Style="{StaticResource CardTitle}" />
+                                        <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,0" Text="{DynamicResource S.Autostart.Text}" />
+                                    </StackPanel>
+                                    <CheckBox x:Name="AutostartSwitch" Grid.Column="1" Style="{StaticResource Switch}" VerticalAlignment="Top" Margin="16,2,0,0"
+                                              Click="AutostartSwitch_Click" />
+                                </Grid>
+
+                                <Border Style="{StaticResource Divider}" />
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource S.Exit.Title}" Style="{StaticResource CardTitle}" />
+                                        <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,10" Text="{DynamicResource S.Exit.Text}" />
+                                        <ui:HotkeyEditor x:Name="ExitHotkey" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="{DynamicResource S.Exit.Button}" Style="{StaticResource GhostButton}" VerticalAlignment="Top"
+                                            Margin="16,0,0,0" Click="Exit_Click" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="{DynamicResource S.UpdatesSection}" Style="{StaticResource SectionLabel}" Margin="4,12,0,8" />
+
+                        <!-- ===== Updates ===== -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource S.Updates.Auto}" Style="{StaticResource CardTitle}" />
+                                        <TextBlock Text="{DynamicResource S.Updates.AutoText}" Style="{StaticResource Muted}" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                    <CheckBox x:Name="UpdatesSwitch" Grid.Column="1" Style="{StaticResource Switch}" VerticalAlignment="Top" Margin="16,2,0,0"
+                                              Click="UpdatesSwitch_Click" />
+                                </Grid>
+                                <Border Style="{StaticResource Divider}" />
+                                <Border x:Name="UpdateBanner" Visibility="Collapsed" Margin="0,0,0,12" Padding="14,12" CornerRadius="{StaticResource RadiusMd}" BorderThickness="1"
+                                        Background="{DynamicResource PillAccentBg}" BorderBrush="{DynamicResource PillAccentRing}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock x:Name="UpdateBannerTitle" Style="{StaticResource CardTitle}" FontSize="14" />
+                                            <TextBlock Style="{StaticResource Muted}" Margin="0,3,0,0">
+                                                <Hyperlink x:Name="UpdatePageLink" Click="UpdatePage_Click" Foreground="{DynamicResource AccentSolid}">
+                                                    <Run Text="{DynamicResource S.Updates.OpenPage}" />
+                                                </Hyperlink>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <Button x:Name="InstallUpdateButton" Grid.Column="1" Style="{StaticResource PrimaryButton}" Margin="12,0,0,0"
+                                                VerticalAlignment="Center" Click="InstallUpdate_Click" />
+                                    </Grid>
+                                </Border>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="UpdateStatus" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                                    <Button x:Name="CheckUpdatesButton" Grid.Column="1" Content="{DynamicResource S.Updates.Check}" Style="{StaticResource SecondaryButton}"
+                                            Margin="12,0,0,0" Click="CheckUpdates_Click" />
+                                </Grid>
+
+                                <!-- Update history: collapsed, fixed max height, scrolls inside -->
+                                <Expander Style="{StaticResource Accordion}" Header="{DynamicResource S.History}" Margin="0,14,0,0">
+                                    <ScrollViewer x:Name="HistoryScroll" MaxHeight="300" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+                                        <StackPanel x:Name="History" />
+                                    </ScrollViewer>
+                                </Expander>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock x:Name="VersionText" Style="{StaticResource Text}" Foreground="{DynamicResource InkFaint}" FontSize="11.5"
+                                   Margin="4,4,0,0" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>

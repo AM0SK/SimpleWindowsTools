@@ -1,0 +1,45 @@
+<UserControl x:Class="SimpleWindowsTools.UI.HotkeyEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             HorizontalAlignment="Left">
+    <!-- Click the chip, press a combination. Esc cancels. The button on the right restores the default. -->
+    <StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <Button x:Name="Chip" Click="Chip_Click" Cursor="Hand" MinWidth="128" Height="30"
+                    PreviewKeyDown="Chip_PreviewKeyDown" PreviewKeyUp="Chip_PreviewKeyUp" LostKeyboardFocus="Chip_LostKeyboardFocus">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Box" CornerRadius="{StaticResource RadiusSm}" BorderThickness="1"
+                                Background="{DynamicResource PillNeutralBg}" BorderBrush="{DynamicResource PillNeutralRing}" Padding="10,0">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Left" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource InkFaint}" />
+                            </Trigger>
+                            <Trigger Property="Tag" Value="recording">
+                                <Setter TargetName="Box" Property="Background" Value="{DynamicResource PillAccentBg}" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentSolid}" />
+                            </Trigger>
+                            <Trigger Property="Tag" Value="error">
+                                <Setter TargetName="Box" Property="Background" Value="{DynamicResource PillBadBg}" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource Critical}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="ChipText" Style="{StaticResource KeyChipText}" Foreground="{DynamicResource Ink}" />
+                    <TextBlock x:Name="EditIcon" Text="&#xE70F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="10"
+                               Foreground="{DynamicResource InkFaint}" Margin="10,1,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="ResetButton" Style="{StaticResource CaptionButton}" Width="30" Height="30" Margin="6,0,0,0"
+                    FontSize="12" Content="&#xE7A7;" Click="Reset_Click" />
+        </StackPanel>
+
+        <TextBlock x:Name="Message" Visibility="Collapsed" Margin="2,6,0,0" FontSize="12"
+                   Style="{StaticResource Text}" Foreground="{DynamicResource Critical}" />
+    </StackPanel>
+</UserControl>

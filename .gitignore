@@ -1,0 +1,14 @@
+bin/
+obj/
+dist/
+*.user
+.vs/
+.vscode/
+.idea/
+
+# Setup exe is built locally for testing; public downloads come from GitHub Releases
+installer/
+
+# Local agent notes (personal paths and setup details)
+CLAUDE.md
+.claude/

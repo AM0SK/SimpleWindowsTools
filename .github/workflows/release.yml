@@ -1,0 +1,87 @@
+# Builds the installer and publishes a GitHub Release whenever the version in the csproj is new.
+#
+# Push to main with a bumped <Version> (and a matching entry on top of Core/Changelog.cs) → this job
+# builds SimpleWindowsTools-Setup.exe and creates release "vX.Y.Z" with it attached. Installed copies
+# check GitHub Releases and show an update notification. Pushes that don't change the version build nothing.
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - ".github/workflows/release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        shell: pwsh
+        run: |
+          [xml]$proj = Get-Content src/SimpleWindowsTools/SimpleWindowsTools.csproj
+          $v = ($proj.Project.PropertyGroup | Where-Object { $_.Version } | Select-Object -First 1).Version
+          if (-not $v) { throw "No <Version> in the csproj" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "Version $v"
+
+      - name: Skip if this version is already released
+        id: exists
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "v${{ steps.version.outputs.version }}" --repo "${{ github.repository }}" *> $null
+          if ($LASTEXITCODE -eq 0) { "skip=true" >> $env:GITHUB_OUTPUT; Write-Host "Already released" }
+          else { "skip=false" >> $env:GITHUB_OUTPUT }
+          exit 0
+
+      - uses: actions/setup-dotnet@v4
+        if: steps.exists.outputs.skip == 'false'
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build installer
+        if: steps.exists.outputs.skip == 'false'
+        shell: pwsh
+        run: |
+          dotnet publish src/SimpleWindowsTools/SimpleWindowsTools.csproj -c Release -r win-x64 `
+            -p:SetupBuild=true -p:PublishSingleFile=true -o out
+          Move-Item out/SimpleWindowsTools.exe SimpleWindowsTools-Setup.exe
+
+      - name: Release notes from Core/Changelog.cs (English column)
+        if: steps.exists.outputs.skip == 'false'
+        shell: pwsh
+        run: |
+          $v = "${{ steps.version.outputs.version }}"
+          $src = Get-Content src/SimpleWindowsTools/Core/Changelog.cs -Raw
+          $start = $src.IndexOf("new(`"$v`"")
+          $notes = @()
+          if ($start -ge 0) {
+            $next = $src.IndexOf('new("', $start + 5)
+            $block = if ($next -gt 0) { $src.Substring($start, $next - $start) } else { $src.Substring($start) }
+            $str = '"((?:[^"\\]|\\.)*)"'
+            # Items are { Ukrainian, English }: take the last string
+            $items = [regex]::Matches($block, "new\[\]\s*\{\s*$str,\s*$str\s*\}")
+            foreach ($m in $items) { $notes += "- " + $m.Groups[2].Value }
+          }
+          if ($notes.Count -eq 0) { $notes = @("- See “Update history” in the app.") }
+          $body = ($notes -join "`n") + "`n`n**Download:** SimpleWindowsTools-Setup.exe below. Already installed? The app shows an update notification."
+          Set-Content notes.md $body -Encoding utf8
+
+      - name: Publish release
+        if: steps.exists.outputs.skip == 'false'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $v = "${{ steps.version.outputs.version }}"
+          gh release create "v$v" SimpleWindowsTools-Setup.exe --repo "${{ github.repository }}" `
+            --title "Simple Windows Tools $v" --notes-file notes.md --target "${{ github.sha }}"
