@@ -13,6 +13,11 @@ public static class Changelog
 
     public static readonly Release[] Releases =
     {
+        new("0.7.1", new DateOnly(2026, 11, 21), new[]
+        {
+            new[] { "Коли оновлення вже знайдено, кнопки «Перевірити зараз» немає, а встановлюється найсвіжіша версія",
+                    "When an update is on offer, “Check now” is hidden and the newest release is the one installed" },
+        }),
         new("0.7.0", new DateOnly(2026, 11, 21), new[]
         {
             new[] { "Автоприховування панелі завдань гарячою клавішею (Ctrl+Alt+F8), також у меню трею",

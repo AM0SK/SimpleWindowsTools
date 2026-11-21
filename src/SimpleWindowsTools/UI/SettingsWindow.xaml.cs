@@ -125,12 +125,17 @@ public partial class SettingsWindow : Window
         }
 
         CheckUpdatesButton.IsEnabled = !_app.CheckingUpdates;
+        // An update is already on offer: its banner is the action; "check now" would only add noise.
+        CheckUpdatesButton.Visibility = UpdateBanner.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
         UpdateStatus.Text = _app.CheckingUpdates ? Loc.T("S.Updates.Checking")
             : _app.UpdateError is string err ? Loc.F("S.Updates.Failed", err)
             : _app.LastUpdateCheck is DateTime t ? (update is null ? Loc.F("S.Updates.UpToDate", FormatCheckTime(t)) : "")
             : Loc.T("S.Updates.Never");
         UpdateStatus.SetResourceReference(TextBlock.ForegroundProperty, _app.UpdateError is null ? "InkMuted" : "Warning");
         UpdateStatus.Visibility = string.IsNullOrEmpty(UpdateStatus.Text) ? Visibility.Collapsed : Visibility.Visible;
+        // Nothing left under the banner (no status, no button): no gap under it either.
+        bool rowEmpty = UpdateStatus.Visibility == Visibility.Collapsed && CheckUpdatesButton.Visibility == Visibility.Collapsed;
+        UpdateBanner.Margin = new Thickness(0, 0, 0, rowEmpty ? 0 : 12);
     }
 
     private static string FormatCheckTime(DateTime t) =>

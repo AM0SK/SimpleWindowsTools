@@ -250,6 +250,16 @@ public sealed class AppController : IDisposable
         {
             UpdateDownload = 0;
             UpdateStateChanged?.Invoke();
+            // The offer may be hours old: if an even newer release came out meanwhile, take that one.
+            try
+            {
+                if (await Updater.CheckAsync() is { } fresh && fresh.Version > update.Version)
+                {
+                    update = AvailableUpdate = fresh;
+                    UpdateStateChanged?.Invoke();
+                }
+            }
+            catch (Exception ex) { Log.Info($"Re-check before download failed, using {update.Version}: {ex.Message}"); }
             var progress = new Progress<double>(p => { UpdateDownload = p; UpdateStateChanged?.Invoke(); });
             var file = await Updater.DownloadAsync(update, progress);
             Process.Start(new ProcessStartInfo(file) { UseShellExecute = true });
@@ -434,6 +444,9 @@ public sealed class AppController : IDisposable
 #if DEBUG
     /// <summary>Docs screenshots: don't show "taken by another app" (the installed copy holds the hotkeys).</summary>
     internal void ForgetHotkeyConflicts() { _failed.Clear(); Changed?.Invoke(); }
+
+    /// <summary>Renders: pretend a release is on offer, to see the banner.</summary>
+    internal void FakeUpdateOffer(UpdateInfo? update) { AvailableUpdate = update; LastUpdateCheck = DateTime.Now; UpdateStateChanged?.Invoke(); }
 #endif
 
     public void Dispose()

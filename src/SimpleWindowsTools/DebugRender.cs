@@ -48,6 +48,13 @@ internal static class DebugRender
             s.ShowAppTab();
             Save((FrameworkElement)s.Content, 640, 1400, (Brush)Application.Current.Resources["Surface0"], Path.Combine(dir, $"settings-app{suffix}.png"));
             s.Close();
+            // Same tab with an update on offer: banner shown, "check now" hidden
+            app.FakeUpdateOffer(new Core.UpdateInfo(new System.Version(9, 9, 9), "https://example.invalid/setup.exe", "https://example.invalid", 1));
+            s = new SettingsWindow(app);
+            s.ShowAppTab();
+            Save((FrameworkElement)s.Content, 640, 1400, (Brush)Application.Current.Resources["Surface0"], Path.Combine(dir, $"settings-app-update{suffix}.png"));
+            app.FakeUpdateOffer(null);
+            s.Close();
         }
         Core.Loc.Set(Core.UiLanguage.Uk);
 
