@@ -353,6 +353,17 @@ internal static class SelfTest
         File.Delete(Path.Combine(SettingsStore.Folder, "settings.json"));
         using var app = new AppController();
 
+        // Taskbar auto-hide: its own hotkey, default Ctrl+Alt+F8, different from every other default
+        Check("taskbar hotkey default Ctrl+Alt+F8", app.GetHotkey(HotkeyId.Taskbar).Display == "Ctrl+Alt+F8", app.GetHotkey(HotkeyId.Taskbar).Display);
+        var defaults = Enum.GetValues<HotkeyId>().Select(id => app.GetDefaultHotkey(id).Display).ToList();
+        Check("all default hotkeys differ", defaults.Distinct().Count() == defaults.Count, string.Join(", ", defaults));
+        Hotkey.TryParse("Ctrl+Alt+F11", out var winKey);
+        var taskDup = app.TrySetHotkey(HotkeyId.Taskbar, winKey);
+        Check("taskbar hotkey can't take the Win blocker's", taskDup is not null, taskDup);
+        string? readError = null;
+        try { _ = Modules.TaskbarAutoHide.IsOn; } catch (Exception ex) { readError = ex.Message; }
+        Check("taskbar state reads from Windows without throwing", readError is null, readError);
+
         Hotkey.TryParse("Ctrl+Alt+F10", out var overlayKey);
         var dup = app.TrySetHotkey(HotkeyId.EmDash, overlayKey);
         Check("duplicate of another function refused", dup is not null && dup.Contains("layout pill"), dup);

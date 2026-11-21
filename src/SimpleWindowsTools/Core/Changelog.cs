@@ -13,6 +13,11 @@ public static class Changelog
 
     public static readonly Release[] Releases =
     {
+        new("0.7.0", new DateOnly(2026, 11, 21), new[]
+        {
+            new[] { "Автоприховування панелі завдань гарячою клавішею (Ctrl+Alt+F8), також у меню трею",
+                    "Taskbar auto-hide on a hotkey (Ctrl+Alt+F8), also in the tray menu" },
+        }),
         new("0.6.3", new DateOnly(2026, 11, 20), new[]
         {
             new[] { "Світлу тему прибрано: програма знову лише темна",

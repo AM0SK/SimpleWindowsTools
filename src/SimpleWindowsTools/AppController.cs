@@ -14,7 +14,7 @@ namespace SimpleWindowsTools;
 /// Owns the modules, settings and hotkeys; the tray menu and the settings window both go through it,
 /// so a change made in one place shows up everywhere. New features (screenshots, …) plug in here.
 /// </summary>
-public enum HotkeyId { ToggleOverlay, ToggleSkip, ToggleWinBlock, EmDash, Screenshot, Exit }
+public enum HotkeyId { ToggleOverlay, ToggleSkip, ToggleWinBlock, EmDash, Screenshot, Exit, Taskbar }
 
 public sealed class AppController : IDisposable
 {
@@ -64,6 +64,9 @@ public sealed class AppController : IDisposable
             new(HotkeyId.Screenshot, "C.Title.Shot", HotkeyDefaults.Screenshot,
                 s => s.ScreenshotHotkey, (s, v) => s.ScreenshotHotkey = v,
                 null), // handled in the keyboard hook: PrintScreen must be taken from the Snipping Tool
+            new(HotkeyId.Taskbar, "C.Title.Taskbar", HotkeyDefaults.Taskbar,
+                s => s.TaskbarHotkey, (s, v) => s.TaskbarHotkey = v,
+                () => SetTaskbarAutoHide(!TaskbarAutoHide.IsOn, notify: true)),
             new(HotkeyId.Exit, "C.Title.Exit", HotkeyDefaults.Exit,
                 s => s.ExitHotkey, (s, v) => s.ExitHotkey = v,
                 RequestExit),
@@ -109,6 +112,15 @@ public sealed class AppController : IDisposable
         Settings.WinBlockEnabled = on;
         Commit();
         if (notify) Toast(Loc.T(on ? "C.WinBlocked" : "C.WinWorks"));
+    }
+
+    /// <summary>Windows' taskbar auto-hide. Not a setting of ours: Windows keeps it, we only flip it.</summary>
+    public void SetTaskbarAutoHide(bool on, bool notify = false)
+    {
+        bool ok = TaskbarAutoHide.Set(on);
+        if (!ok) Log.Info($"Taskbar auto-hide -> {on} was not applied");
+        Changed?.Invoke();
+        if (notify || !ok) Toast(Loc.T(!ok ? "C.TaskbarFailed" : on ? "C.TaskbarHidden" : "C.TaskbarShown"));
     }
 
     public void SetEmDash(bool on)

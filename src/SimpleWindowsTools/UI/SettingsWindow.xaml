@@ -148,6 +148,23 @@
                             </Grid>
                         </Border>
 
+                        <!-- ===== Taskbar auto-hide (the state is Windows' own) ===== -->
+                        <Border Style="{StaticResource Card}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource S.Taskbar.Title}" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,10" Text="{DynamicResource S.Taskbar.Text}" />
+                                    <ui:HotkeyEditor x:Name="TaskbarHotkey" />
+                                </StackPanel>
+                                <CheckBox x:Name="TaskbarSwitch" Grid.Column="1" Style="{StaticResource Switch}" VerticalAlignment="Top" Margin="16,2,0,0"
+                                          Click="TaskbarSwitch_Click" />
+                            </Grid>
+                        </Border>
+
                         <!-- ===== Em dash ===== -->
                         <Border Style="{StaticResource Card}">
                             <Grid>

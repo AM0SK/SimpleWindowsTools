@@ -35,6 +35,7 @@
                             <TextBlock Style="{StaticResource Muted}" Margin="0,6,0,12" Text="{DynamicResource I.Intro}" />
                             <TextBlock Style="{StaticResource Text}" Margin="0,0,0,4" Text="{DynamicResource I.F1}" />
                             <TextBlock Style="{StaticResource Text}" Margin="0,0,0,4" Text="{DynamicResource I.F2}" />
+                            <TextBlock Style="{StaticResource Text}" Margin="0,0,0,4" Text="{DynamicResource I.F6}" />
                             <TextBlock Style="{StaticResource Text}" Margin="0,0,0,4" Text="{DynamicResource I.F3}" />
                             <TextBlock Style="{StaticResource Text}" Margin="0,0,0,4" Text="{DynamicResource I.F4}" />
                             <TextBlock Style="{StaticResource Text}" Text="{DynamicResource I.F5}" />

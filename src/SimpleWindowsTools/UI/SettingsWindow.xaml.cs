@@ -30,6 +30,7 @@ public partial class SettingsWindow : Window
         SkipHotkey.Init(_app, HotkeyId.ToggleSkip);
         BuildLanguageChips();
         WinHotkey.Init(_app, HotkeyId.ToggleWinBlock);
+        TaskbarHotkey.Init(_app, HotkeyId.Taskbar);
         DashHotkey.Init(_app, HotkeyId.EmDash);
         ShotHotkey.Init(_app, HotkeyId.Screenshot);
         ExitHotkey.Init(_app, HotkeyId.Exit);
@@ -46,6 +47,7 @@ public partial class SettingsWindow : Window
         Activated += (_, _) =>
         {
             LoadAutostartState(); // may have been switched off in Task Manager meanwhile
+            TaskbarSwitch.IsChecked = Modules.TaskbarAutoHide.IsOn; // or auto-hide in Windows settings
             BuildShotTools();     // may have been reordered in the editor meanwhile
         };
         UI.DragReorder.Attach(ShotTools, tags =>
@@ -63,6 +65,7 @@ public partial class SettingsWindow : Window
         OverlayOptions.IsEnabled = s.LayoutOverlayEnabled;
         OverlayOptions.Opacity = s.LayoutOverlayEnabled ? 1 : 0.45;
         WinSwitch.IsChecked = s.WinBlockEnabled;
+        TaskbarSwitch.IsChecked = Modules.TaskbarAutoHide.IsOn; // read from Windows: may be changed in its settings
         DashSwitch.IsChecked = s.EmDashEnabled;
         DurationSlider.Value = s.OverlayDurationMs;
         FontSlider.Value = s.OverlayFontSize;
@@ -74,6 +77,7 @@ public partial class SettingsWindow : Window
         foreach (var chip in SkipLanguages.Children.OfType<ToggleButton>())
             chip.IsChecked = s.SkippedLanguages.Contains((int)chip.Tag);
         WinHotkey.Refresh();
+        TaskbarHotkey.Refresh();
         DashHotkey.Refresh();
         ShotHotkey.Refresh();
         ShotSwitch.IsChecked = s.ScreenshotEnabled;
@@ -367,6 +371,7 @@ public partial class SettingsWindow : Window
 
     private void OverlaySwitch_Click(object sender, RoutedEventArgs e) => _app.SetLayoutOverlay(OverlaySwitch.IsChecked == true);
     private void WinSwitch_Click(object sender, RoutedEventArgs e) => _app.SetWinBlock(WinSwitch.IsChecked == true);
+    private void TaskbarSwitch_Click(object sender, RoutedEventArgs e) => _app.SetTaskbarAutoHide(TaskbarSwitch.IsChecked == true);
     private void DashSwitch_Click(object sender, RoutedEventArgs e) => _app.SetEmDash(DashSwitch.IsChecked == true);
 
     private void Look_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)

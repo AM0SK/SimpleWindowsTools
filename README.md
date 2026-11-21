@@ -1,8 +1,8 @@
 # Simple Windows Tools
 
 A small tray app for Windows 10 and 11 with a handful of everyday helpers: an on-screen keyboard layout
-indicator, skipping layouts you rarely use, a Win key blocker, an em dash on any layout and a quick
-screenshot editor. Dark interface in English and Ukrainian.
+indicator, skipping layouts you rarely use, a Win key blocker, taskbar auto-hide on a hotkey, an em dash on
+any layout and a quick screenshot editor. Dark interface in English and Ukrainian.
 
 **[⬇ Download the latest version](https://github.com/AM0SK/SimpleWindowsTools/releases/latest)** — `SimpleWindowsTools-Setup.exe`
 
@@ -15,6 +15,7 @@ screenshot editor. Dark interface in English and Ukrainian.
 | **Layout pill** | Shows EN / RU / UA (any installed language) for a moment in the middle of the screen when the keyboard layout changes. | `Ctrl+Alt+F10` on/off |
 | **Skip languages** | Chosen layouts are left out when you switch with Alt+Shift / Win+Space. The hotkey brings them back for a while. | `Ctrl+Alt+F9` |
 | **Win key blocker** | Win doesn't open Start; Win+Space and Alt+Space do nothing. Handy for games and for people who hit Win by accident. | `Ctrl+Alt+F11` on/off |
+| **Taskbar auto-hide** | Turns Windows' “Automatically hide the taskbar” on and off. Works on Windows 10 and 11, for the taskbars on all monitors. | `Ctrl+Alt+F8` |
 | **Em dash** | Types “—” in any layout. | `Alt` + `-` |
 | **Screenshot** | Select an area of the screen, mark it up, then copy or save. | `PrintScreen` |
 | **Quit** | Closes the app. | `Ctrl+Alt+F12` |

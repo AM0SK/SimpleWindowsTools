@@ -13,6 +13,7 @@ public sealed class TrayIcon : IDisposable
     private readonly ToolStripMenuItem _overlayItem;
     private readonly ToolStripMenuItem _skipItem;
     private readonly ToolStripMenuItem _winItem;
+    private readonly ToolStripMenuItem _taskbarItem;
     private readonly ToolStripMenuItem _dashItem;
     private readonly ToolStripMenuItem _exitItem;
     private readonly ToolStripMenuItem _shotItem;
@@ -32,6 +33,7 @@ public sealed class TrayIcon : IDisposable
         _skipItem = new ToolStripMenuItem("", null, (_, _) => _app.SetSkipLanguages(!_app.Settings.SkipLanguagesEnabled, notify: true));
         _winItem = new ToolStripMenuItem("", null, (_, _) => _app.SetWinBlock(!_app.Settings.WinBlockEnabled));
         _dashItem = new ToolStripMenuItem("", null, (_, _) => _app.SetEmDash(!_app.Settings.EmDashEnabled));
+        _taskbarItem = new ToolStripMenuItem("", null, (_, _) => _app.SetTaskbarAutoHide(!Modules.TaskbarAutoHide.IsOn));
 
         _exitItem = new ToolStripMenuItem("", null, (_, _) => _app.RequestExit());
 
@@ -56,6 +58,7 @@ public sealed class TrayIcon : IDisposable
             Padding = new Padding(4),
             Font = new Font("Segoe UI", 9.5f),
         };
+        menu.Opening += (_, _) => Refresh(); // taskbar auto-hide may have been changed in Windows settings
         menu.Items.AddRange(new ToolStripItem[]
         {
             _updateItem,
@@ -66,6 +69,7 @@ public sealed class TrayIcon : IDisposable
             _overlayItem,
             _skipItem,
             _winItem,
+            _taskbarItem,
             _dashItem,
             new ToolStripSeparator(),
             _exitItem,
@@ -109,6 +113,10 @@ public sealed class TrayIcon : IDisposable
         _overlayItem.Text = Core.Loc.T("S.Overlay.Title");
         _skipItem.Text = Core.Loc.T("S.Skip.Title");
         _winItem.Text = Core.Loc.T("T.Win");
+        _taskbarItem.Text = Core.Loc.T("T.Taskbar");
+        _taskbarItem.Checked = Modules.TaskbarAutoHide.IsOn; // Windows' own state, re-read whenever the menu opens
+        _taskbarItem.ShortcutKeyDisplayString = _app.GetHotkey(HotkeyId.Taskbar).Display;
+        _taskbarItem.ShowShortcutKeys = true;
         _dashItem.Text = Core.Loc.T("S.Dash.Title");
         _exitItem.Text = Core.Loc.T("T.Exit");
         var update = _app.AvailableUpdate;

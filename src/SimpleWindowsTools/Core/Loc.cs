@@ -102,6 +102,12 @@ public static class Strings
             "Win не відкриває «Пуск», Win + Space і Alt + Space нічого не роблять. Поки Win затиснута, інші клавіші теж не натискаються.",
             "Win doesn't open Start, Win + Space and Alt + Space do nothing. While Win is held, other keys don't work either.",
         },
+        ["S.Taskbar.Title"] = new[] { "Автоприховування панелі завдань", "Taskbar auto-hide" },
+        ["S.Taskbar.Text"] = new[]
+        {
+            "Гаряча клавіша вмикає й вимикає «Автоматично приховувати панель завдань» з параметрів Windows. Перемикач показує поточний стан.",
+            "The hotkey turns Windows' “Automatically hide the taskbar” on and off. The switch shows the current state.",
+        },
         ["S.Dash.Title"] = new[] { "Довге тире", "Em dash" },
         ["S.Dash.Text"] = new[]
         {
@@ -266,6 +272,7 @@ public static class Strings
         ["C.Title.Win"] = new[] { "блокування Win", "the Win blocker" },
         ["C.Title.Dash"] = new[] { "довге тире", "the em dash" },
         ["C.Title.Shot"] = new[] { "скриншот", "screenshots" },
+        ["C.Title.Taskbar"] = new[] { "автоприховування панелі завдань", "taskbar auto-hide" },
         ["C.Title.Exit"] = new[] { "закриття програми", "quitting the app" },
         ["C.InUse"] = new[] { "Уже використовується: {0}", "Already used for {0}" },
         ["C.TakenByOther"] = new[] { "Це сполучення вже зайняте іншою програмою", "Another app already uses this shortcut" },
@@ -276,12 +283,16 @@ public static class Strings
         ["C.InSwitch"] = new[] { "{0}: у перемиканні", "{0}: back in switching" },
         ["C.WinBlocked"] = new[] { "Win: заблокована", "Win: blocked" },
         ["C.WinWorks"] = new[] { "Win: працює", "Win: works" },
+        ["C.TaskbarHidden"] = new[] { "Панель завдань: ховається", "Taskbar: auto-hide" },
+        ["C.TaskbarShown"] = new[] { "Панель завдань: завжди видно", "Taskbar: always shown" },
+        ["C.TaskbarFailed"] = new[] { "Не вдалося змінити панель завдань", "Couldn't change the taskbar" },
         ["C.ShotFailed"] = new[] { "Скриншот не вдався", "Screenshot failed" },
 
         // ===== Tray menu =====
         ["T.Settings"] = new[] { "Налаштування", "Settings" },
         ["T.Shot"] = new[] { "Зробити скриншот", "Take a screenshot" },
         ["T.Win"] = new[] { "Блокування Win", "Win blocker" },
+        ["T.Taskbar"] = new[] { "Ховати панель завдань", "Auto-hide the taskbar" },
         ["T.Exit"] = new[] { "Вихід", "Quit" },
 
         // ===== Screenshot editor =====
@@ -313,6 +324,7 @@ public static class Strings
         ["I.Intro"] = new[] { "Маленька програма в треї для Windows 10 і 11:", "A small tray app for Windows 10 and 11:" },
         ["I.F1"] = new[] { "•  плашка EN / RU / UA і пропуск непотрібних мов", "•  EN / RU / UA layout pill and skipping unneeded languages" },
         ["I.F2"] = new[] { "•  блокування клавіші Win, Win + Space і Alt + Space", "•  blocks the Win key, Win + Space and Alt + Space" },
+        ["I.F6"] = new[] { "•  автоприховування панелі завдань гарячою клавішею", "•  taskbar auto-hide on a hotkey" },
         ["I.F3"] = new[] { "•  довге тире «—» на Alt + «−»", "•  em dash “—” on Alt + “−”" },
         ["I.F4"] = new[] { "•  скриншоти зі стрілками, рамками, лініями, текстом, олівцем і розмиттям", "•  screenshots with arrows, boxes, lines, text, pencil and blur" },
         ["I.F5"] = new[] { "•  інтерфейс українською та англійською", "•  interface in Ukrainian and English" },

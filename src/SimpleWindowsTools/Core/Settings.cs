@@ -31,6 +31,8 @@ public sealed class AppSettings
     public string ToggleSkipHotkey { get; set; } = HotkeyDefaults.ToggleSkip;
     public string ScreenshotHotkey { get; set; } = HotkeyDefaults.Screenshot;
     public string ExitHotkey { get; set; } = HotkeyDefaults.Exit;
+    /// <summary>Flips Windows' "automatically hide the taskbar" (the state itself lives in Windows).</summary>
+    public string TaskbarHotkey { get; set; } = HotkeyDefaults.Taskbar;
 
     // Screenshot editor: last used color, line thickness and text size are kept between shots
     public bool ScreenshotEnabled { get; set; } = true;
@@ -63,6 +65,7 @@ public static class HotkeyDefaults
     public const string ToggleSkip = "Ctrl+Alt+F9";
     public const string Screenshot = "PrintScreen";
     public const string Exit = "Ctrl+Alt+F12";
+    public const string Taskbar = "Ctrl+Alt+F8";
 }
 
 public static class SettingsStore
