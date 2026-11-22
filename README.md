@@ -16,6 +16,7 @@ any layout and a quick screenshot editor. Dark interface in English and Ukrainia
 | **Skip languages** | Chosen layouts are left out when you switch with Alt+Shift / Win+Space. The hotkey brings them back for a while. | `Ctrl+Alt+F9` |
 | **Win key blocker** | Win doesn't open Start; Win+Space and Alt+Space do nothing. Handy for games and for people who hit Win by accident. | `Ctrl+Alt+F11` on/off |
 | **Taskbar auto-hide** | Turns Windows' “Automatically hide the taskbar” on and off. Works on Windows 10 and 11, for the taskbars on all monitors. | `Ctrl+Alt+F8` |
+| **Launch apps** | Your own shortcut for any program, shortcut, file or folder (e.g. Calculator on `Ctrl+Alt+C`). Add as many as you like; they open with normal user rights, like a double-click. | your choice |
 | **Em dash** | Types “—” in any layout. | `Alt` + `-` |
 | **Screenshot** | Select an area of the screen, mark it up, then copy or save. | `PrintScreen` |
 | **Quit** | Closes the app. | `Ctrl+Alt+F12` |

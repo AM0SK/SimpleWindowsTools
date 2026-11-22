@@ -14,7 +14,7 @@
     <AssemblyName>SimpleWindowsTools</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-    <Version>0.7.1</Version>
+    <Version>0.8.0</Version>
     <Product>Simple Windows Tools</Product>
     <!-- File description = the name Task Manager shows in Startup apps -->
     <AssemblyTitle>Simple Windows Tools</AssemblyTitle>

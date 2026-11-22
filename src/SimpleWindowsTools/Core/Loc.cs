@@ -108,6 +108,30 @@ public static class Strings
             "Гаряча клавіша вмикає й вимикає «Автоматично приховувати панель завдань» з параметрів Windows. Перемикач показує поточний стан.",
             "The hotkey turns Windows' “Automatically hide the taskbar” on and off. The switch shows the current state.",
         },
+        ["S.Launch.Title"] = new[] { "Запуск програм", "Launch apps" },
+        ["S.Launch.Text"] = new[]
+        {
+            "Своє сполучення клавіш для будь-якої програми, ярлика, файлу чи теки. Відкривається зі звичайними правами, як подвійним кліком.",
+            "Your own shortcut for any program, shortcut, file or folder. It opens with normal rights, like a double-click.",
+        },
+        ["S.Launch.Add"] = new[] { "Додати програму", "Add a program" },
+        ["S.Launch.Standard"] = new[] { "Стандартні програми", "Built-in apps" },
+        ["S.Std.Calc"] = new[] { "Калькулятор", "Calculator" },
+        ["S.Std.Notepad"] = new[] { "Блокнот", "Notepad" },
+        ["S.Std.Paint"] = new[] { "Paint", "Paint" },
+        ["S.Std.Snip"] = new[] { "Ножиці", "Snipping Tool" },
+        ["S.Std.Terminal"] = new[] { "Термінал", "Terminal" },
+        ["S.Std.Explorer"] = new[] { "Провідник", "File Explorer" },
+        ["S.Std.TaskMgr"] = new[] { "Диспетчер завдань", "Task Manager" },
+        ["S.Std.Cmd"] = new[] { "Командний рядок", "Command Prompt" },
+        ["S.Std.PowerShell"] = new[] { "PowerShell", "PowerShell" },
+        ["S.Std.Control"] = new[] { "Панель керування", "Control Panel" },
+        ["S.Std.CharMap"] = new[] { "Таблиця символів", "Character Map" },
+        ["S.Launch.Remove"] = new[] { "Прибрати", "Remove" },
+        ["S.Launch.Missing"] = new[] { "Файл не знайдено: {0}", "File not found: {0}" },
+        ["S.Launch.Pick"] = new[] { "Що відкривати сполученням клавіш", "What the shortcut should open" },
+        ["S.Launch.Filter"] = new[] { "Програми та ярлики", "Programs and shortcuts" },
+        ["S.Launch.AllFiles"] = new[] { "Усі файли", "All files" },
         ["S.Dash.Title"] = new[] { "Довге тире", "Em dash" },
         ["S.Dash.Text"] = new[]
         {
@@ -258,6 +282,7 @@ public static class Strings
         ["H.Close"] = new[] { "Закрити без збереження", "Close without saving" },
 
         // ===== Hotkey editor =====
+        ["HK.NotSet"] = new[] { "Задати сполучення", "Set a shortcut" },
         ["HK.IsDefault"] = new[] { "Стоїть стандартне сполучення", "The default shortcut is set" },
         ["HK.Reset"] = new[] { "Повернути стандартне: {0}", "Reset to default: {0}" },
         ["HK.Taken"] = new[] { "Зайнято іншою програмою — обери інше сполучення", "Taken by another app, pick another shortcut" },
@@ -286,6 +311,7 @@ public static class Strings
         ["C.TaskbarHidden"] = new[] { "Панель завдань: ховається", "Taskbar: auto-hide" },
         ["C.TaskbarShown"] = new[] { "Панель завдань: завжди видно", "Taskbar: always shown" },
         ["C.TaskbarFailed"] = new[] { "Не вдалося змінити панель завдань", "Couldn't change the taskbar" },
+        ["C.LaunchFailed"] = new[] { "Не вдалося відкрити: {0}", "Couldn't open {0}" },
         ["C.ShotFailed"] = new[] { "Скриншот не вдався", "Screenshot failed" },
 
         // ===== Tray menu =====
@@ -325,6 +351,7 @@ public static class Strings
         ["I.F1"] = new[] { "•  плашка EN / RU / UA і пропуск непотрібних мов", "•  EN / RU / UA layout pill and skipping unneeded languages" },
         ["I.F2"] = new[] { "•  блокування клавіші Win, Win + Space і Alt + Space", "•  blocks the Win key, Win + Space and Alt + Space" },
         ["I.F6"] = new[] { "•  автоприховування панелі завдань гарячою клавішею", "•  taskbar auto-hide on a hotkey" },
+        ["I.F7"] = new[] { "•  запуск будь-яких програм своїми сполученнями клавіш", "•  launch any app with your own shortcut" },
         ["I.F3"] = new[] { "•  довге тире «—» на Alt + «−»", "•  em dash “—” on Alt + “−”" },
         ["I.F4"] = new[] { "•  скриншоти зі стрілками, рамками, лініями, текстом, олівцем і розмиттям", "•  screenshots with arrows, boxes, lines, text, pencil and blur" },
         ["I.F5"] = new[] { "•  інтерфейс українською та англійською", "•  interface in Ukrainian and English" },

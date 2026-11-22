@@ -34,6 +34,9 @@ public sealed class AppSettings
     /// <summary>Flips Windows' "automatically hide the taskbar" (the state itself lives in Windows).</summary>
     public string TaskbarHotkey { get; set; } = HotkeyDefaults.Taskbar;
 
+    /// <summary>"Launch apps": any number of program / file / folder + hotkey rows.</summary>
+    public List<LaunchEntry> Launchers { get; set; } = new();
+
     // Screenshot editor: last used color, line thickness and text size are kept between shots
     public bool ScreenshotEnabled { get; set; } = true;
     public string ScreenshotColor { get; set; } = "#F2555A";
@@ -54,6 +57,14 @@ public sealed class AppSettings
 
     /// <summary>Bumped when a default changes in a way old settings files must follow.</summary>
     public int Version { get; set; }
+}
+
+/// <summary>One launcher row: what to open and its hotkey ("" until the user sets one).</summary>
+public sealed class LaunchEntry
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
+    public string Path { get; set; } = "";
+    public string Hotkey { get; set; } = "";
 }
 
 /// <summary>The "reset" button in the settings window goes back to these.</summary>

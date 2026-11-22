@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -12,7 +13,10 @@ namespace SimpleWindowsTools.UI;
 public partial class HotkeyEditor : UserControl
 {
     private AppController? _app;
-    private HotkeyId _id;
+    private Func<Hotkey?> _get = () => null;
+    private Func<Hotkey?> _default = () => null; // null: no default (launcher rows) → no reset button
+    private Func<bool> _taken = () => false;
+    private Func<Hotkey, string?> _set = _ => null;
     private bool _recording;
     private string? _error;
 
@@ -21,29 +25,51 @@ public partial class HotkeyEditor : UserControl
         InitializeComponent();
     }
 
+    /// <summary>One of the app's features (has a default to reset to).</summary>
     public void Init(AppController app, HotkeyId id)
     {
         _app = app;
-        _id = id;
+        _get = () => app.GetHotkey(id);
+        _default = () => app.GetDefaultHotkey(id);
+        _taken = () => app.IsHotkeyTaken(id);
+        _set = hk => app.TrySetHotkey(id, hk);
         Refresh();
     }
+
+    /// <summary>A "launch apps" row: may have no hotkey yet, no default.</summary>
+    public void InitLauncher(AppController app, string launcherId)
+    {
+        _app = app;
+        _get = () => app.GetLauncherHotkey(launcherId);
+        _default = () => null;
+        _taken = () => app.IsLauncherTaken(launcherId);
+        _set = hk => app.TrySetLauncherHotkey(launcherId, hk);
+        Refresh();
+    }
+
+    /// <summary>Starts recording right away (a launcher row that was just added).</summary>
+    public void StartRecording() => Chip_Click(this, new RoutedEventArgs());
 
     public void Refresh()
     {
         if (_app is null || _recording) return;
-        var current = _app.GetHotkey(_id);
-        var def = _app.GetDefaultHotkey(_id);
+        var current = _get();
+        var def = _default();
 
-        ChipText.Text = current.Display;
-        ChipText.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, "Ink");
+        ChipText.Text = current?.Display ?? Loc.T("HK.NotSet");
+        ChipText.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, current is null ? "InkMuted" : "Ink");
         EditIcon.Visibility = Visibility.Visible;
 
-        bool isDefault = current == def;
-        ResetButton.IsEnabled = !isDefault;
-        ResetButton.Opacity = isDefault ? 0.35 : 1;
-        ResetButton.ToolTip = isDefault ? Loc.T("HK.IsDefault") : Loc.F("HK.Reset", def.Display);
+        ResetButton.Visibility = def is null ? Visibility.Collapsed : Visibility.Visible;
+        if (def is { } d)
+        {
+            bool isDefault = current == d;
+            ResetButton.IsEnabled = !isDefault;
+            ResetButton.Opacity = isDefault ? 0.35 : 1;
+            ResetButton.ToolTip = isDefault ? Loc.T("HK.IsDefault") : Loc.F("HK.Reset", d.Display);
+        }
 
-        string? message = _error ?? (_app.IsHotkeyTaken(_id) ? Loc.T("HK.Taken") : null);
+        string? message = _error ?? (_taken() ? Loc.T("HK.Taken") : null);
         Chip.Tag = message is null ? null : "error";
         Message.Text = message ?? "";
         Message.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, "Critical");
@@ -118,14 +144,14 @@ public partial class HotkeyEditor : UserControl
         if (_app is null) return;
         _recording = false;
         _app.EndHotkeyCapture(); // hotkeys back first, so TrySetHotkey can tell if the new one is taken
-        if (result is { } hk) _error = _app.TrySetHotkey(_id, hk);
+        if (result is { } hk) _error = _set(hk);
         Refresh();
     }
 
     private void Reset_Click(object sender, RoutedEventArgs e)
     {
-        if (_app is null) return;
-        _error = _app.TrySetHotkey(_id, _app.GetDefaultHotkey(_id));
+        if (_app is null || _default() is not { } def) return;
+        _error = _set(def);
         Refresh();
     }
 

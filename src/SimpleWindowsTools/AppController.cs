@@ -376,9 +376,8 @@ public sealed class AppController : IDisposable
     public string? TrySetHotkey(HotkeyId id, Hotkey hotkey)
     {
         var def = _defs[id];
-        foreach (var other in _defs.Values)
-            if (other.Id != id && GetHotkey(other.Id) == hotkey)
-                return Loc.F("C.InUse", Loc.T(other.TitleKey));
+        if (HotkeyOwner(hotkey, exceptFixed: id, exceptLauncher: null) is { } owner)
+            return Loc.F("C.InUse", owner);
 
         if (def.Action is not null && !_capturing)
         {
@@ -409,6 +408,7 @@ public sealed class AppController : IDisposable
         _capturing = true;
         _hook.Suspended = true;
         foreach (var def in _defs.Values) _hotkeys.Remove(def.Id.ToString());
+        foreach (var entry in Settings.Launchers) _hotkeys.Remove(LaunchName(entry.Id));
     }
 
     public void EndHotkeyCapture()
@@ -423,6 +423,8 @@ public sealed class AppController : IDisposable
     {
         _failed.Clear();
         foreach (var def in _defs.Values) RegisterOne(def);
+        _failedLaunch.Clear();
+        foreach (var entry in Settings.Launchers) RegisterLauncher(entry);
         _emDash.Combo = GetHotkey(HotkeyId.EmDash);
         _screenshotKey.Combo = GetHotkey(HotkeyId.Screenshot);
     }
@@ -432,6 +434,96 @@ public sealed class AppController : IDisposable
         if (def.Action is null || _capturing) return;
         if (!_hotkeys.Set(def.Id.ToString(), GetHotkey(def.Id).ToString(), def.Action)) _failed.Add(def.Id);
         else _failed.Remove(def.Id);
+    }
+
+    /// <summary>Who already uses this combination: a feature's title or a launcher's app name; null if free.</summary>
+    private string? HotkeyOwner(Hotkey hotkey, HotkeyId? exceptFixed, string? exceptLauncher)
+    {
+        foreach (var other in _defs.Values)
+            if (other.Id != exceptFixed && GetHotkey(other.Id) == hotkey)
+                return Loc.T(other.TitleKey);
+        foreach (var entry in Settings.Launchers)
+            if (entry.Id != exceptLauncher && Hotkey.TryParse(entry.Hotkey, out var hk) && hk == hotkey)
+                return AppLauncher.DisplayName(entry.Path);
+        return null;
+    }
+
+    // ===== Launch apps: any number of program / file + hotkey rows =====
+
+    private readonly HashSet<string> _failedLaunch = new();
+
+    private static string LaunchName(string id) => "Launch:" + id;
+
+    public IReadOnlyList<LaunchEntry> Launchers => Settings.Launchers;
+
+    /// <summary>New row without a hotkey yet (the settings card asks for one right away).</summary>
+    public LaunchEntry AddLauncher(string path)
+    {
+        var entry = new LaunchEntry { Path = path };
+        Settings.Launchers.Add(entry);
+        SettingsStore.Save(Settings);
+        Changed?.Invoke();
+        return entry;
+    }
+
+    public void RemoveLauncher(string id)
+    {
+        _hotkeys.Remove(LaunchName(id));
+        _failedLaunch.Remove(id);
+        Settings.Launchers.RemoveAll(e => e.Id == id);
+        SettingsStore.Save(Settings);
+        Changed?.Invoke();
+    }
+
+    public Hotkey? GetLauncherHotkey(string id) =>
+        Settings.Launchers.Find(e => e.Id == id) is { } e && Hotkey.TryParse(e.Hotkey, out var hk) ? hk : null;
+
+    public bool IsLauncherTaken(string id) => _failedLaunch.Contains(id);
+
+    /// <summary>Same rules as the features' hotkeys. Returns an error to show, or null.</summary>
+    public string? TrySetLauncherHotkey(string id, Hotkey hotkey)
+    {
+        var entry = Settings.Launchers.Find(e => e.Id == id);
+        if (entry is null) return null;
+        if (HotkeyOwner(hotkey, exceptFixed: null, exceptLauncher: id) is { } owner)
+            return Loc.F("C.InUse", owner);
+
+        if (!_capturing)
+        {
+            if (!_hotkeys.Set(LaunchName(id), hotkey.ToString(), () => Launch(id)))
+            {
+                RegisterLauncher(entry); // put the old one back
+                return Loc.T("C.TakenByOther");
+            }
+            _failedLaunch.Remove(id);
+        }
+        entry.Hotkey = hotkey.ToString();
+        SettingsStore.Save(Settings);
+        Changed?.Invoke();
+        return null;
+    }
+
+    private void RegisterLauncher(LaunchEntry entry)
+    {
+        if (_capturing || !Hotkey.TryParse(entry.Hotkey, out _)) return;
+        var id = entry.Id;
+        if (_hotkeys.Set(LaunchName(id), entry.Hotkey, () => Launch(id))) _failedLaunch.Remove(id);
+        else _failedLaunch.Add(id);
+    }
+
+    public void Launch(string id)
+    {
+        var entry = Settings.Launchers.Find(e => e.Id == id);
+        if (entry is null) return;
+        try
+        {
+            AppLauncher.Start(entry.Path);
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Launch {entry.Path}", ex);
+            Toast(Loc.F("C.LaunchFailed", AppLauncher.DisplayName(entry.Path)));
+        }
     }
 
     private static Hotkey Parse(HotkeyDef def, string text) =>

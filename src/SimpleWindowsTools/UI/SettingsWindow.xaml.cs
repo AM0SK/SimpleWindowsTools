@@ -31,6 +31,7 @@ public partial class SettingsWindow : Window
         BuildLanguageChips();
         WinHotkey.Init(_app, HotkeyId.ToggleWinBlock);
         TaskbarHotkey.Init(_app, HotkeyId.Taskbar);
+        BuildLaunchRows();
         DashHotkey.Init(_app, HotkeyId.EmDash);
         ShotHotkey.Init(_app, HotkeyId.Screenshot);
         ExitHotkey.Init(_app, HotkeyId.Exit);
@@ -78,6 +79,7 @@ public partial class SettingsWindow : Window
             chip.IsChecked = s.SkippedLanguages.Contains((int)chip.Tag);
         WinHotkey.Refresh();
         TaskbarHotkey.Refresh();
+        foreach (var editor in _launchEditors) editor.Refresh();
         DashHotkey.Refresh();
         ShotHotkey.Refresh();
         ShotSwitch.IsChecked = s.ScreenshotEnabled;
@@ -348,6 +350,135 @@ public partial class SettingsWindow : Window
             ShotTools.Children.Add(chip);
             n++;
         }
+    }
+
+    // ===== Launch apps =====
+
+    private readonly List<HotkeyEditor> _launchEditors = new();
+
+    /// <summary>One row per launcher: icon, name + path, hotkey chip, remove button.</summary>
+    private void BuildLaunchRows(string? recordId = null)
+    {
+        LaunchRows.Children.Clear();
+        _launchEditors.Clear();
+        foreach (var entry in _app.Launchers.ToList())
+        {
+            var row = new Grid { Margin = new Thickness(0, 12, 0, 0) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            FrameworkElement icon = AppLauncher.Icon(entry.Path) is { } image
+                ? new Image { Source = image, Width = 24, Height = 24 }
+                : new TextBlock { Text = "\uE8E5", FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"), FontSize = 18, Width = 24, TextAlignment = TextAlignment.Center };
+            if (icon is TextBlock glyph) glyph.SetResourceReference(TextBlock.ForegroundProperty, "InkMuted");
+            icon.VerticalAlignment = VerticalAlignment.Top;
+            icon.Margin = new Thickness(0, 3, 12, 0);
+            RenderOptions.SetBitmapScalingMode(icon, BitmapScalingMode.HighQuality);
+
+            bool missing = !System.IO.File.Exists(entry.Path) && !System.IO.Directory.Exists(entry.Path);
+            var name = new TextBlock { Text = AppLauncher.DisplayName(entry.Path), Style = (Style)FindResource("Text"), FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis };
+            var path = new TextBlock
+            {
+                Text = missing ? Loc.F("S.Launch.Missing", entry.Path) : entry.Path,
+                Style = (Style)FindResource("Muted"),
+                FontSize = 11.5,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                ToolTip = entry.Path,
+            };
+            if (missing) path.SetResourceReference(TextBlock.ForegroundProperty, "Warning");
+            var text = new StackPanel { VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 0, 12, 0), Children = { name, path } };
+            Grid.SetColumn(text, 1);
+
+            var editor = new HotkeyEditor { VerticalAlignment = VerticalAlignment.Top };
+            editor.InitLauncher(_app, entry.Id);
+            Grid.SetColumn(editor, 2);
+            _launchEditors.Add(editor);
+
+            var id = entry.Id;
+            var remove = new Button
+            {
+                Style = (Style)FindResource("CaptionButton"),
+                Width = 30,
+                Height = 30,
+                Margin = new Thickness(6, 0, 0, 0),
+                FontSize = 12,
+                Content = "\uE74D", // trash can
+                ToolTip = Loc.T("S.Launch.Remove"),
+                VerticalAlignment = VerticalAlignment.Top,
+            };
+            remove.Click += (_, _) => { _app.RemoveLauncher(id); BuildLaunchRows(); };
+            Grid.SetColumn(remove, 3);
+
+            row.Children.Add(icon);
+            row.Children.Add(text);
+            row.Children.Add(editor);
+            row.Children.Add(remove);
+            LaunchRows.Children.Add(row);
+
+            if (id == recordId) Dispatcher.BeginInvoke(editor.StartRecording, System.Windows.Threading.DispatcherPriority.Input);
+        }
+        LaunchRows.Visibility = _app.Launchers.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    /// <summary>Shows / hides the built-in programs; one click on a chip adds it and asks for its hotkey.</summary>
+    private void StandardApps_Click(object sender, RoutedEventArgs e)
+    {
+        bool show = StandardApps.Visibility != Visibility.Visible;
+        StandardApps.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        StandardAppsChevron.Text = show ? "\uE70E" : "\uE70D"; // chevron up / down
+        if (!show) return;
+
+        StandardApps.Children.Clear();
+        foreach (var (nameKey, path) in AppLauncher.Standard)
+        {
+            var content = new StackPanel { Orientation = Orientation.Horizontal };
+            if (AppLauncher.Icon(path) is { } image)
+            {
+                var icon = new Image { Source = image, Width = 16, Height = 16, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
+                RenderOptions.SetBitmapScalingMode(icon, BitmapScalingMode.HighQuality);
+                content.Children.Add(icon);
+            }
+            var label = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
+            label.SetResourceReference(TextBlock.TextProperty, nameKey);
+            content.Children.Add(label);
+
+            var chip = new Button
+            {
+                Style = (Style)FindResource("SecondaryButton"),
+                Content = content,
+                Margin = new Thickness(0, 0, 8, 8),
+                ToolTip = path,
+            };
+            var target = path;
+            chip.Click += (_, _) =>
+            {
+                StandardApps.Visibility = Visibility.Collapsed;
+                StandardAppsChevron.Text = "\uE70D";
+                var entry = _app.AddLauncher(target);
+                BuildLaunchRows(recordId: entry.Id); // ask for its hotkey right away
+            };
+            StandardApps.Children.Add(chip);
+        }
+    }
+
+#if DEBUG
+    internal void DebugShowStandardApps() => StandardApps_Click(this, new RoutedEventArgs());
+#endif
+
+    private void AddLauncher_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = Loc.T("S.Launch.Pick"),
+            Filter = Loc.T("S.Launch.Filter") + "|*.exe;*.lnk;*.bat;*.cmd|" + Loc.T("S.Launch.AllFiles") + "|*.*",
+            DereferenceLinks = false, // keep the .lnk itself: it carries the arguments and the right app
+            InitialDirectory = System.Environment.GetFolderPath(System.Environment.SpecialFolder.CommonStartMenu),
+        };
+        if (dialog.ShowDialog(this) != true) return;
+        var entry = _app.AddLauncher(dialog.FileName);
+        BuildLaunchRows(recordId: entry.Id); // ask for its hotkey right away
     }
 
     /// <summary>One chip per installed input language, in the system order.</summary>

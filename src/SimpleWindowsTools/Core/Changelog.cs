@@ -13,6 +13,11 @@ public static class Changelog
 
     public static readonly Release[] Releases =
     {
+        new("0.8.0", new DateOnly(2026, 11, 22), new[]
+        {
+            new[] { "Запуск програм: будь-яка програма, ярлик, файл чи тека за своїм сполученням клавіш. Рядків скільки завгодно",
+                    "Launch apps: any program, shortcut, file or folder on your own shortcut, as many rows as you like" },
+        }),
         new("0.7.1", new DateOnly(2026, 11, 21), new[]
         {
             new[] { "Коли оновлення вже знайдено, кнопки «Перевірити зараз» немає, а встановлюється найсвіжіша версія",

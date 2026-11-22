@@ -347,6 +347,61 @@ internal static class SelfTest
         Check("task query does not crash", Autostart.TaskExists() || !Autostart.TaskExists());
     }
 
+    private static void LauncherTests(AppController app)
+    {
+        var calc = Path.Combine(Environment.SystemDirectory, "calc.exe");
+        var notepad = Path.Combine(Environment.SystemDirectory, "notepad.exe");
+        Check("launcher name of calc.exe comes from the program", AppLauncher.DisplayName(calc).Length > 0 && !AppLauncher.DisplayName(calc).Equals("calc", StringComparison.OrdinalIgnoreCase),
+            AppLauncher.DisplayName(calc));
+        Check("launcher icon of calc.exe", AppLauncher.Icon(calc) is not null);
+        Check("launcher name of a folder", AppLauncher.DisplayName(Environment.SystemDirectory).Equals("System32", StringComparison.OrdinalIgnoreCase), AppLauncher.DisplayName(Environment.SystemDirectory));
+
+        var present = AppLauncher.Standard.ToList();
+        Check("built-in apps: Calculator and Notepad are offered", present.Any(s => s.Path == calc) && present.Any(s => s.Path == notepad), string.Join(", ", present.Select(s => Path.GetFileName(s.Path))));
+        Check("built-in apps: every name has a string", AppLauncher.StandardCandidates.All(s => Strings.Table.ContainsKey(s.NameKey)));
+        Check("built-in apps: only files that exist are offered", present.All(s => File.Exists(s.Path)));
+        Check("built-in apps: PowerShell path resolves", present.Any(s => s.Path.EndsWith(@"WindowsPowerShell\v1.0\powershell.exe", StringComparison.OrdinalIgnoreCase)));
+
+        var a = app.AddLauncher(calc);
+        var b = app.AddLauncher(notepad);
+        Check("new launcher has no hotkey yet", app.GetLauncherHotkey(a.Id) is null && app.Launchers.Count == 2);
+
+        Hotkey.TryParse("Ctrl+Alt+Shift+F7", out var combo);
+        Check("launcher hotkey accepted", app.TrySetLauncherHotkey(a.Id, combo) is null && app.GetLauncherHotkey(a.Id) == combo);
+        var same = app.TrySetLauncherHotkey(b.Id, combo);
+        Check("two launchers can't share a hotkey", same is not null && same.Contains(AppLauncher.DisplayName(calc)), same);
+        Hotkey.TryParse("Ctrl+Alt+F10", out var overlay);
+        var feature = app.TrySetLauncherHotkey(b.Id, overlay);
+        Check("launcher can't take a feature's hotkey", feature is not null && feature.Contains("layout pill"), feature);
+        var reverse = app.TrySetHotkey(HotkeyId.Taskbar, combo);
+        Check("feature can't take a launcher's hotkey", reverse is not null && reverse.Contains(AppLauncher.DisplayName(calc)), reverse);
+
+        var saved = SettingsStore.Load();
+        Check("launchers saved to settings", saved.Launchers.Count == 2 && saved.Launchers[0].Path == calc && saved.Launchers[0].Hotkey == combo.ToString());
+
+        app.RemoveLauncher(a.Id);
+        Check("removed launcher frees its hotkey", app.TrySetLauncherHotkey(b.Id, combo) is null, app.TrySetLauncherHotkey(b.Id, combo));
+        app.RemoveLauncher(b.Id);
+        Check("all launchers removed", app.Launchers.Count == 0 && SettingsStore.Load().Launchers.Count == 0);
+
+        string? missingError = null;
+        try { AppLauncher.Start(Path.Combine(Path.GetTempPath(), "no-such-app-" + Guid.NewGuid().ToString("N") + ".exe")); }
+        catch (FileNotFoundException) { missingError = "ok"; }
+        catch (Exception ex) { missingError = ex.GetType().Name; }
+        Check("missing file reported, not started", missingError == "ok", missingError);
+
+        // The real route the elevated app uses: ask Explorer to run it (hidden cmd writes a marker file).
+        var marker = Path.Combine(Path.GetTempPath(), "swt-launch-" + Guid.NewGuid().ToString("N") + ".txt");
+        string? shellError = null;
+        AppLauncher.ForceShellRoute = true;
+        try { AppLauncher.Start(Path.Combine(Environment.SystemDirectory, "cmd.exe"), $"/c echo ok>\"{marker}\"", show: 0); }
+        catch (Exception ex) { shellError = ex.Message; }
+        finally { AppLauncher.ForceShellRoute = false; }
+        for (int i = 0; i < 50 && !File.Exists(marker); i++) System.Threading.Thread.Sleep(100);
+        Check("launch through Explorer works", shellError is null && File.Exists(marker), shellError ?? "no marker file");
+        try { File.Delete(marker); } catch { }
+    }
+
     private static void ControllerTests()
     {
         Section("Controller: hotkey changes and modules");
@@ -363,6 +418,8 @@ internal static class SelfTest
         string? readError = null;
         try { _ = Modules.TaskbarAutoHide.IsOn; } catch (Exception ex) { readError = ex.Message; }
         Check("taskbar state reads from Windows without throwing", readError is null, readError);
+
+        LauncherTests(app);
 
         Hotkey.TryParse("Ctrl+Alt+F10", out var overlayKey);
         var dup = app.TrySetHotkey(HotkeyId.EmDash, overlayKey);

@@ -110,12 +110,21 @@ internal static class DebugRender
         Core.Loc.Set(Core.UiLanguage.En);
         using var app = new AppController();
         app.Settings.SkippedLanguages.Add(0x0419); // show RU as skipped
+        // Two sample launchers (temp settings, nothing of the user's)
+        foreach (var (exe, key) in new[] { ("calc.exe", "Ctrl+Alt+C"), ("notepad.exe", "Ctrl+Alt+N") })
+            app.Settings.Launchers.Add(new Core.LaunchEntry { Path = Path.Combine(System.Environment.SystemDirectory, exe), Hotkey = key });
         app.ForgetHotkeyConflicts();
 
         var bg = (Brush)Application.Current.Resources["Surface0"];
         var s = new SettingsWindow(app);
         app.ForgetHotkeyConflicts();
         Save((FrameworkElement)s.Content, 640, 860, bg, Path.Combine(dir, "settings-features.png"), fixSwitches: true);
+        s.Close();
+        s = new SettingsWindow(app);
+        app.ForgetHotkeyConflicts();
+        if (s.FindName("Scroll") is System.Windows.Controls.ScrollViewer tall) tall.VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Disabled;
+        s.DebugShowStandardApps();
+        Save((FrameworkElement)s.Content, 640, 2000, bg, Path.Combine(Path.GetTempPath(), "swt-settings-features-full.png") /* for checking only, not a README picture */, fixSwitches: true);
         s.Close();
         s = new SettingsWindow(app);
         app.ForgetHotkeyConflicts();
