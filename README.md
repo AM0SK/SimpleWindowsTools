@@ -1,8 +1,9 @@
 # Simple Windows Tools
 
 A small tray app for Windows 10 and 11 with a handful of everyday helpers: an on-screen keyboard layout
-indicator, skipping layouts you rarely use, a Win key blocker, taskbar auto-hide on a hotkey, an em dash on
-any layout and a quick screenshot editor. Dark interface in English and Ukrainian.
+indicator, skipping layouts you rarely use, a Win key blocker, taskbar auto-hide on a hotkey, your own
+shortcuts for launching apps, an em dash on any layout and a quick screenshot editor. Dark interface in
+English and Ukrainian; updates itself from this repository.
 
 **[⬇ Download the latest version](https://github.com/AM0SK/SimpleWindowsTools/releases/latest)** — `SimpleWindowsTools-Setup.exe`
 
@@ -16,13 +17,14 @@ any layout and a quick screenshot editor. Dark interface in English and Ukrainia
 | **Skip languages** | Chosen layouts are left out when you switch with Alt+Shift / Win+Space. The hotkey brings them back for a while. | `Ctrl+Alt+F9` |
 | **Win key blocker** | Win doesn't open Start; Win+Space and Alt+Space do nothing. Handy for games and for people who hit Win by accident. | `Ctrl+Alt+F11` on/off |
 | **Taskbar auto-hide** | Turns Windows' “Automatically hide the taskbar” on and off. Works on Windows 10 and 11, for the taskbars on all monitors. | `Ctrl+Alt+F8` |
-| **Launch apps** | Your own shortcut for any program, shortcut, file or folder (e.g. Calculator on `Ctrl+Alt+C`). Add as many as you like; they open with normal user rights, like a double-click. | your choice |
+| **Launch apps** | Your own shortcut for any program, shortcut, file or folder (e.g. Calculator on `Ctrl+Alt+C`). Add as many as you like; **Built-in apps** adds Calculator, Notepad, File Explorer, Task Manager and others in one click. They open with normal user rights, like a double-click. | your choice |
 | **Em dash** | Types “—” in any layout. | `Alt` + `-` |
 | **Screenshot** | Select an area of the screen, mark it up, then copy or save. | `PrintScreen` |
 | **Quit** | Closes the app. | `Ctrl+Alt+F12` |
 
 Every hotkey can be changed: click it in the settings window and press a new combination (↺ resets it).
-Open the settings by clicking the tray icon.
+The app won't let two features or apps share a combination, and warns if another program already holds it.
+Open the settings by clicking the tray icon; its right-click menu has the on/off toggles too.
 
 ### Screenshot editor
 
@@ -42,7 +44,7 @@ Open the settings by clicking the tray icon.
 | `Ctrl+S` | Save as PNG |
 | `Esc` | Close |
 
-The last color, thickness, text size and save folder are remembered.
+The last color, thickness, text size, blur strength, tool order and save folder are remembered.
 
 ### Layout pill
 
@@ -73,13 +75,16 @@ The second tab has the interface language, start with Windows, and updates with 
 
 ![Installer](docs/screenshots/installer.png)
 
+Settings are kept in `%APPDATA%\SimpleWindowsTools\settings.json`.
+
 **Uninstall:** Windows Settings → Apps → Simple Windows Tools → Uninstall. Settings are removed too.
 
 ## Updates
 
 The app checks GitHub Releases every few hours and shows a Windows notification when a new version is out.
-Open the settings → **App** → **Download and install**: it downloads the new installer from this repository
-and runs it, and the installer updates the app in place. Nothing is installed without your click.
+Open the settings → **App** → **Download and install** (or click the notification): it downloads the newest
+installer from this repository and runs it, and the installer updates the app in place and starts it again.
+Nothing is installed without your click.
 
 You can turn the check off in the settings (it's on by default). The only request it makes is to
 `api.github.com` for the latest release of this repository; no data about you or your PC is sent.
