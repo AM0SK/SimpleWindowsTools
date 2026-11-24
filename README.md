@@ -2,8 +2,8 @@
 
 A small tray app for Windows 10 and 11 with a handful of everyday helpers: an on-screen keyboard layout
 indicator, skipping layouts you rarely use, a Win key blocker, taskbar auto-hide on a hotkey, your own
-shortcuts for launching apps and typing any character (the em dash and more) and a quick screenshot editor. Dark interface in
-English and Ukrainian; updates itself from this repository.
+shortcuts for launching apps and for typing any character (the em dash, quotes, arrows…), and a quick
+screenshot editor. Dark interface in English and Ukrainian; updates itself from this repository.
 
 **[⬇ Download the latest version](https://github.com/AM0SK/SimpleWindowsTools/releases/latest)** — `SimpleWindowsTools-Setup.exe`
 
@@ -25,6 +25,19 @@ English and Ukrainian; updates itself from this repository.
 Every hotkey can be changed: click it in the settings window and press a new combination (↺ resets it).
 The app won't let two features, apps or characters share a combination, and warns if another program already holds it.
 Open the settings by clicking the tray icon; its right-click menu has the on/off toggles too.
+
+### Characters
+
+Each row is a character (or a short piece of text, up to 32 characters) and the shortcut that types it.
+It works in any keyboard layout and in any app, including ones running as administrator.
+
+- **Popular characters** opens a set of chips: em and en dashes, minus, no-break space, ellipsis, «»
+  and other quotes, the apostrophe ’, bullet, × ÷ ± ≈ ≠ ≤ ≥, arrows, °, ₴ € £, © ® ™ § №, ✓ ∞ ½ ² ³.
+  One click adds the row and asks for its shortcut right away.
+- **Add a character** opens a field: paste the character, or type its code — `U+2014`, `2014`, `—`,
+  `0x2014` or `&#x2014;` all give “—”. The box on the left previews the result.
+- The em dash on `Alt` + `-` is the first row by default; you can change its shortcut or remove it.
+  The switch on the card turns all rows off at once (also in the tray menu).
 
 ### Screenshot editor
 
