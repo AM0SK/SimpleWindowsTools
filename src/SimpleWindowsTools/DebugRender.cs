@@ -124,6 +124,7 @@ internal static class DebugRender
         app.ForgetHotkeyConflicts();
         if (s.FindName("Scroll") is System.Windows.Controls.ScrollViewer tall) tall.VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Disabled;
         s.DebugShowStandardApps();
+        s.DebugShowPopularChars();
         Save((FrameworkElement)s.Content, 640, 2000, bg, Path.Combine(Path.GetTempPath(), "swt-settings-features-full.png") /* for checking only, not a README picture */, fixSwitches: true);
         s.Close();
         s = new SettingsWindow(app);

@@ -14,7 +14,7 @@ namespace SimpleWindowsTools;
 /// Owns the modules, settings and hotkeys; the tray menu and the settings window both go through it,
 /// so a change made in one place shows up everywhere. New features (screenshots, …) plug in here.
 /// </summary>
-public enum HotkeyId { ToggleOverlay, ToggleSkip, ToggleWinBlock, EmDash, Screenshot, Exit, Taskbar }
+public enum HotkeyId { ToggleOverlay, ToggleSkip, ToggleWinBlock, Screenshot, Exit, Taskbar }
 
 public sealed class AppController : IDisposable
 {
@@ -23,7 +23,7 @@ public sealed class AppController : IDisposable
     private readonly OverlayWindow _overlay = new();
     private readonly LayoutWatcher _layout;
     private readonly WinKeyBlocker _winBlocker;
-    private readonly EmDash _emDash;
+    private readonly CharTyper _chars;
     private readonly HookHotkey _screenshotKey;
     private Screenshot.ScreenshotWindow? _screenshot;
 
@@ -43,7 +43,7 @@ public sealed class AppController : IDisposable
         var dispatcher = Dispatcher.CurrentDispatcher;
 
         _winBlocker = new WinKeyBlocker(_hook, dispatcher);
-        _emDash = new EmDash(_hook, dispatcher);
+        _chars = new CharTyper(_hook, dispatcher);
         _screenshotKey = new HookHotkey(_hook, dispatcher, TakeScreenshot);
         _layout = new LayoutWatcher(_hook, _overlay, () => Settings);
 
@@ -58,9 +58,6 @@ public sealed class AppController : IDisposable
             new(HotkeyId.ToggleWinBlock, "C.Title.Win", HotkeyDefaults.ToggleWinBlock,
                 s => s.ToggleWinBlockHotkey, (s, v) => s.ToggleWinBlockHotkey = v,
                 () => SetWinBlock(!Settings.WinBlockEnabled, notify: true)),
-            new(HotkeyId.EmDash, "C.Title.Dash", HotkeyDefaults.EmDash,
-                s => s.EmDashHotkey, (s, v) => s.EmDashHotkey = v,
-                null), // handled in the keyboard hook by EmDash
             new(HotkeyId.Screenshot, "C.Title.Shot", HotkeyDefaults.Screenshot,
                 s => s.ScreenshotHotkey, (s, v) => s.ScreenshotHotkey = v,
                 null), // handled in the keyboard hook: PrintScreen must be taken from the Snipping Tool
@@ -123,9 +120,9 @@ public sealed class AppController : IDisposable
         if (notify || !ok) Toast(Loc.T(!ok ? "C.TaskbarFailed" : on ? "C.TaskbarHidden" : "C.TaskbarShown"));
     }
 
-    public void SetEmDash(bool on)
+    public void SetChars(bool on)
     {
-        Settings.EmDashEnabled = on;
+        Settings.CharsEnabled = on;
         Commit();
     }
 
@@ -357,7 +354,8 @@ public sealed class AppController : IDisposable
         _layout.Enabled = Settings.LayoutOverlayEnabled
             || (Settings.SkipLanguagesEnabled && Settings.SkippedLanguages.Count > 0);
         _winBlocker.Enabled = Settings.WinBlockEnabled;
-        _emDash.Enabled = Settings.EmDashEnabled;
+        _chars.Enabled = Settings.CharsEnabled;
+        UpdateCharItems();
         _screenshotKey.Enabled = Settings.ScreenshotEnabled;
     }
 
@@ -376,7 +374,7 @@ public sealed class AppController : IDisposable
     public string? TrySetHotkey(HotkeyId id, Hotkey hotkey)
     {
         var def = _defs[id];
-        if (HotkeyOwner(hotkey, exceptFixed: id, exceptLauncher: null) is { } owner)
+        if (HotkeyOwner(hotkey, exceptFixed: id) is { } owner)
             return Loc.F("C.InUse", owner);
 
         if (def.Action is not null && !_capturing)
@@ -390,7 +388,6 @@ public sealed class AppController : IDisposable
         }
 
         def.Set(Settings, hotkey.ToString());
-        _emDash.Combo = GetHotkey(HotkeyId.EmDash);
         _screenshotKey.Combo = GetHotkey(HotkeyId.Screenshot);
         SettingsStore.Save(Settings);
         Changed?.Invoke();
@@ -425,7 +422,6 @@ public sealed class AppController : IDisposable
         foreach (var def in _defs.Values) RegisterOne(def);
         _failedLaunch.Clear();
         foreach (var entry in Settings.Launchers) RegisterLauncher(entry);
-        _emDash.Combo = GetHotkey(HotkeyId.EmDash);
         _screenshotKey.Combo = GetHotkey(HotkeyId.Screenshot);
     }
 
@@ -436,8 +432,8 @@ public sealed class AppController : IDisposable
         else _failed.Remove(def.Id);
     }
 
-    /// <summary>Who already uses this combination: a feature's title or a launcher's app name; null if free.</summary>
-    private string? HotkeyOwner(Hotkey hotkey, HotkeyId? exceptFixed, string? exceptLauncher)
+    /// <summary>Who already uses this combination: a feature's title, a launcher's app name or a character; null if free.</summary>
+    private string? HotkeyOwner(Hotkey hotkey, HotkeyId? exceptFixed = null, string? exceptLauncher = null, string? exceptChar = null)
     {
         foreach (var other in _defs.Values)
             if (other.Id != exceptFixed && GetHotkey(other.Id) == hotkey)
@@ -445,6 +441,9 @@ public sealed class AppController : IDisposable
         foreach (var entry in Settings.Launchers)
             if (entry.Id != exceptLauncher && Hotkey.TryParse(entry.Hotkey, out var hk) && hk == hotkey)
                 return AppLauncher.DisplayName(entry.Path);
+        foreach (var entry in Settings.Chars)
+            if (entry.Id != exceptChar && Hotkey.TryParse(entry.Hotkey, out var hk) && hk == hotkey)
+                return Loc.F("C.Title.Char", CharTyper.Visible(entry.Text));
         return null;
     }
 
@@ -485,7 +484,7 @@ public sealed class AppController : IDisposable
     {
         var entry = Settings.Launchers.Find(e => e.Id == id);
         if (entry is null) return null;
-        if (HotkeyOwner(hotkey, exceptFixed: null, exceptLauncher: id) is { } owner)
+        if (HotkeyOwner(hotkey, exceptLauncher: id) is { } owner)
             return Loc.F("C.InUse", owner);
 
         if (!_capturing)
@@ -525,6 +524,52 @@ public sealed class AppController : IDisposable
             Toast(Loc.F("C.LaunchFailed", AppLauncher.DisplayName(entry.Path)));
         }
     }
+
+    // ===== Characters: any number of text + hotkey rows, typed from the keyboard hook =====
+
+    public IReadOnlyList<CharEntry> Chars => Settings.Chars;
+
+    /// <summary>New row without a hotkey yet (the settings card asks for one right away).</summary>
+    public CharEntry AddChar(string text)
+    {
+        var entry = new CharEntry { Text = text };
+        Settings.Chars.Add(entry);
+        SettingsStore.Save(Settings);
+        Changed?.Invoke();
+        return entry;
+    }
+
+    public void RemoveChar(string id)
+    {
+        Settings.Chars.RemoveAll(e => e.Id == id);
+        UpdateCharItems();
+        SettingsStore.Save(Settings);
+        Changed?.Invoke();
+    }
+
+    public Hotkey? GetCharHotkey(string id) =>
+        Settings.Chars.Find(e => e.Id == id) is { } e && Hotkey.TryParse(e.Hotkey, out var hk) ? hk : null;
+
+    /// <summary>Same conflict rules as the other hotkeys. Returns an error to show, or null.</summary>
+    public string? TrySetCharHotkey(string id, Hotkey hotkey)
+    {
+        var entry = Settings.Chars.Find(e => e.Id == id);
+        if (entry is null) return null;
+        if (HotkeyOwner(hotkey, exceptChar: id) is { } owner)
+            return Loc.F("C.InUse", owner);
+        entry.Hotkey = hotkey.ToString();
+        UpdateCharItems();
+        SettingsStore.Save(Settings);
+        Changed?.Invoke();
+        return null;
+    }
+
+    private void UpdateCharItems() =>
+        _chars.Items = Settings.Chars
+            .Select(e => (Ok: Hotkey.TryParse(e.Hotkey, out var hk), Combo: hk, e.Text))
+            .Where(x => x.Ok && x.Text.Length > 0)
+            .Select(x => (x.Combo, x.Text))
+            .ToList();
 
     private static Hotkey Parse(HotkeyDef def, string text) =>
         Hotkey.TryParse(text, out var hk) ? hk : Hotkey.TryParse(def.Default, out var d) ? d : default;

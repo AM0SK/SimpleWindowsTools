@@ -35,7 +35,7 @@ internal static class SelfTest
 
         Safe(HotkeyTests);
         Safe(SettingsTests);
-        Safe(EmDashTests);
+        Safe(CharTests);
         Safe(WinBlockerTests);
         Safe(HookHotkeyTests);
         Safe(SuspendTests);
@@ -133,7 +133,9 @@ internal static class SelfTest
         Check("v2 keeps a chosen F9 exit", SettingsStore.Load().ExitHotkey == "Ctrl+Alt+F9");
 
         File.WriteAllText(file, "{ not json");
-        Check("broken file → defaults, no crash", SettingsStore.Load().EmDashHotkey == "Alt+OemMinus");
+        var broken = SettingsStore.Load();
+        Check("broken file → defaults with the em dash row, no crash",
+            broken.Chars.Count == 1 && broken.Chars[0].Text == "—" && broken.Chars[0].Hotkey == "Alt+OemMinus" && broken.CharsEnabled);
 
         var s = new AppSettings { SkippedLanguages = new List<int> { 0x0422 }, ScreenshotColor = "#4C8DFF" };
         SettingsStore.Save(s);
@@ -154,18 +156,34 @@ internal static class SelfTest
         File.WriteAllText(file, """{ "Version": 3, "Language": "ru" }""");
         var olderFile = SettingsStore.Load();
         Check("settings from 0.4 → updates on", olderFile.CheckUpdates);
+        Check("new install → em dash row", defaults.Chars.Count == 1 && defaults.Chars[0].Text == "—" && defaults.Chars[0].Hotkey == "Alt+OemMinus");
+        File.WriteAllText(file, """{ "Version": 4, "EmDashEnabled": false, "EmDashHotkey": "Ctrl+Shift+D" }""");
+        var v4 = SettingsStore.Load();
+        Check("v4 em dash → first character row with its hotkey and off state",
+            v4.Chars.Count == 1 && v4.Chars[0].Text == "—" && v4.Chars[0].Hotkey == "Ctrl+Shift+D" && !v4.CharsEnabled,
+            $"{v4.Chars.Count} {v4.Chars.FirstOrDefault()?.Hotkey} {v4.CharsEnabled}");
+        SettingsStore.Save(v4);
+        var json = File.ReadAllText(file);
+        Check("old em dash fields dropped from the file", !json.Contains("EmDash"), json);
+        File.WriteAllText(file, """{ "Version": 4 }""");
+        var v4Default = SettingsStore.Load();
+        Check("v4 with default em dash → row on Alt+-, on", v4Default.Chars.Count == 1 && v4Default.Chars[0].Hotkey == "Alt+OemMinus" && v4Default.CharsEnabled);
+        File.WriteAllText(file, """{ "Version": 5, "Chars": [] }""");
+        Check("v5 with all rows removed stays empty", SettingsStore.Load().Chars.Count == 0);
         File.WriteAllText(file, """{ "Version": 4, "Theme": "light", "Language": "en" }""");
         Check("old file with a theme still loads (theme ignored)", SettingsStore.Load().Language == "en");
         File.Delete(file);
     }
 
-    private static void EmDashTests()
+    private static void CharTests()
     {
-        Section("Em dash (Alt + -)");
+        Section("Characters (em dash on Alt + -, any text on any combo)");
         var hook = new KeyboardHook();
-        var dash = new EmDash(hook, Dispatcher.CurrentDispatcher) { Enabled = true };
+        var chars = new CharTyper(hook, Dispatcher.CurrentDispatcher) { Enabled = true };
         Hotkey.TryParse("Alt+OemMinus", out var combo);
-        dash.Combo = combo;
+        Hotkey.TryParse("Ctrl+Shift+D", out var custom);
+        Hotkey.TryParse("Alt+Oem7", out var quotes);
+        chars.Items = new List<(Hotkey, string)> { (combo, "—"), (custom, "→"), (quotes, "«»") };
         CaptureInput();
 
         Check("Alt down passes", !Down(hook, VK.LMenu));
@@ -180,6 +198,11 @@ internal static class SelfTest
         Pump();
         Check("second time only the dash", Describe(Sent) == "'—'v '—'^", Describe(Sent));
         Up(hook, VK.OemMinus);
+        Sent.Clear();
+        Check("another row while Alt still held", Down(hook, 0xDE));
+        Pump();
+        Check("two-character text typed", Describe(Sent) == "'«'v '«'^ '»'v '»'^", Describe(Sent));
+        Up(hook, 0xDE);
         Check("physical Alt up swallowed (already released)", Up(hook, VK.LMenu));
 
         Sent.Clear();
@@ -191,26 +214,54 @@ internal static class SelfTest
         Check("Alt+Shift+'-' passes", !Down(hook, VK.OemMinus));
         Up(hook, VK.OemMinus); Up(hook, VK.LShift); Up(hook, VK.LMenu);
 
-        dash.Enabled = false;
+        chars.Enabled = false;
         Down(hook, VK.LMenu);
         Check("disabled → passes", !Down(hook, VK.OemMinus));
         Up(hook, VK.OemMinus); Up(hook, VK.LMenu);
         Pump();
         Check("nothing sent while disabled / not matching", Sent.Count == 0, Describe(Sent));
 
-        // Re-assigned combo
-        dash.Enabled = true;
-        Hotkey.TryParse("Ctrl+Shift+D", out var custom);
-        dash.Combo = custom;
+        chars.Enabled = true;
         Sent.Clear();
         Down(hook, VK.LControl); Down(hook, VK.LShift);
         Check("custom combo Ctrl+Shift+D swallowed", Down(hook, 0x44));
         Pump();
-        Check("custom combo releases Ctrl and Shift", Describe(Sent) == "E8v E8^ A2^ A0^ '—'v '—'^", Describe(Sent));
+        Check("custom combo releases Ctrl and Shift, types →", Describe(Sent) == "E8v E8^ A2^ A0^ '→'v '→'^", Describe(Sent));
         Up(hook, 0x44);
         Check("Ctrl up swallowed", Up(hook, VK.LControl));
         Check("Shift up swallowed", Up(hook, VK.LShift));
+
+        chars.Items = new List<(Hotkey, string)>();
+        Sent.Clear();
+        Down(hook, VK.LMenu);
+        Check("no rows → Alt+'-' passes", !Down(hook, VK.OemMinus));
+        Up(hook, VK.OemMinus); Up(hook, VK.LMenu);
         InputSender.TestSink = null;
+
+        Section("Characters: input and names");
+        Check("U+2014 → —", CharTyper.ParseInput("U+2014") == "—");
+        Check("u+2014 → —", CharTyper.ParseInput("u+2014") == "—");
+        Check("2014 → —", CharTyper.ParseInput("2014") == "—");
+        Check("\\u2014 → —", CharTyper.ParseInput("\\u2014") == "—");
+        Check("0x2014 → —", CharTyper.ParseInput("0x2014") == "—");
+        Check("&#x2014; → —", CharTyper.ParseInput("&#x2014;") == "—");
+        Check("U+1F600 → emoji (surrogate pair)", CharTyper.ParseInput("U+1F600") == "\U0001F600");
+        Check("pasted character kept", CharTyper.ParseInput(" → ") == "→");
+        Check("pasted no-break space kept", CharTyper.ParseInput("\u00A0") == "\u00A0");
+        Check("several characters kept", CharTyper.ParseInput("«»") == "«»");
+        Check("empty → null", CharTyper.ParseInput("  ") is null && CharTyper.ParseInput("") is null);
+        Check("surrogate code → null", CharTyper.ParseInput("U+D800") is null);
+        Check("out of range → null", CharTyper.ParseInput("U+110000") is null);
+        Check("control char → null", CharTyper.ParseInput("U+0007") is null);
+        Check("too long → null", CharTyper.ParseInput(new string('x', CharTyper.MaxLength + 1)) is null);
+        Check("codes of —", CharTyper.Codes("—") == "U+2014", CharTyper.Codes("—"));
+        Check("codes of emoji", CharTyper.Codes("\U0001F600") == "U+1F600", CharTyper.Codes("\U0001F600"));
+        Check("codes of «»", CharTyper.Codes("«»") == "U+00AB U+00BB", CharTyper.Codes("«»"));
+        Check("no-break space shown visibly", CharTyper.Visible("\u00A0") != "\u00A0");
+        Check("popular: every name has a string", CharTyper.Popular.All(p => Strings.Table.ContainsKey(p.NameKey)));
+        Check("popular: no duplicates", CharTyper.Popular.Select(p => p.Text).Distinct().Count() == CharTyper.Popular.Length);
+        Check("em dash has a name", CharTyper.NameKey("—") == "Ch.EmDash");
+        Check("own text has no name", CharTyper.NameKey("xyz") is null);
     }
 
     private static void WinBlockerTests()
@@ -421,16 +472,7 @@ internal static class SelfTest
 
         LauncherTests(app);
 
-        Hotkey.TryParse("Ctrl+Alt+F10", out var overlayKey);
-        var dup = app.TrySetHotkey(HotkeyId.EmDash, overlayKey);
-        Check("duplicate of another function refused", dup is not null && dup.Contains("layout pill"), dup);
-        Check("em dash unchanged after refusal", app.GetHotkey(HotkeyId.EmDash).Display == "Alt+-");
-
-        Hotkey.TryParse("Ctrl+Shift+Oem3", out var newDash);
-        Check("new em dash combo accepted", app.TrySetHotkey(HotkeyId.EmDash, newDash) is null);
-        Check("saved to settings", SettingsStore.Load().EmDashHotkey == "Ctrl+Shift+Oem3", SettingsStore.Load().EmDashHotkey);
-        Check("reset to default", app.TrySetHotkey(HotkeyId.EmDash, app.GetDefaultHotkey(HotkeyId.EmDash)) is null
-                                  && app.GetHotkey(HotkeyId.EmDash).Display == "Alt+-");
+        CharControllerTests(app);
 
         Hotkey.TryParse("Ctrl+Alt+Shift+F7", out var free);
         var r = app.TrySetHotkey(HotkeyId.ToggleSkip, free);
@@ -446,9 +488,38 @@ internal static class SelfTest
         Check("skip toggle off saved", !SettingsStore.Load().SkipLanguagesEnabled);
         app.SetLanguageSkipped(0x0422, false);
         Check("unskip UA", !SettingsStore.Load().SkippedLanguages.Contains(0x0422));
-        app.SetWinBlock(false); app.SetEmDash(false); app.SetLayoutOverlay(false); app.SetScreenshot(false);
+        app.SetWinBlock(false); app.SetChars(false); app.SetLayoutOverlay(false); app.SetScreenshot(false);
         var s = SettingsStore.Load();
-        Check("module switches saved", !s.WinBlockEnabled && !s.EmDashEnabled && !s.LayoutOverlayEnabled && !s.ScreenshotEnabled);
+        Check("module switches saved", !s.WinBlockEnabled && !s.CharsEnabled && !s.LayoutOverlayEnabled && !s.ScreenshotEnabled);
+    }
+
+    private static void CharControllerTests(AppController app)
+    {
+        Section("Controller: characters");
+        Check("fresh app has the em dash row on Alt+-", app.Chars.Count == 1 && app.Chars[0].Text == "—"
+            && app.GetCharHotkey(app.Chars[0].Id)?.Display == "Alt+-");
+        var dash = app.Chars[0];
+        Hotkey.TryParse("Ctrl+Alt+F10", out var overlayKey);
+        var dup = app.TrySetCharHotkey(dash.Id, overlayKey);
+        Check("character can't take a feature's hotkey", dup is not null && dup.Contains("layout pill"), dup);
+        Check("em dash unchanged after refusal", app.GetCharHotkey(dash.Id)?.Display == "Alt+-");
+        Hotkey.TryParse("Alt+OemMinus", out var dashKey);
+        var reverse = app.TrySetHotkey(HotkeyId.ToggleSkip, dashKey);
+        Check("feature can't take a character's hotkey", reverse is not null && reverse.Contains("—"), reverse);
+
+        var arrow = app.AddChar("→");
+        Check("new character has no hotkey yet", app.GetCharHotkey(arrow.Id) is null && app.Chars.Count == 2);
+        var same = app.TrySetCharHotkey(arrow.Id, dashKey);
+        Check("two characters can't share a hotkey", same is not null && same.Contains("—"), same);
+        Hotkey.TryParse("Ctrl+Shift+Oem3", out var arrowKey);
+        Check("character hotkey accepted", app.TrySetCharHotkey(arrow.Id, arrowKey) is null && app.GetCharHotkey(arrow.Id) == arrowKey);
+        var saved = SettingsStore.Load();
+        Check("characters saved to settings", saved.Chars.Count == 2 && saved.Chars[1].Text == "→" && saved.Chars[1].Hotkey == arrowKey.ToString());
+        app.RemoveChar(arrow.Id);
+        Check("removed character gone from settings", app.Chars.Count == 1 && SettingsStore.Load().Chars.Count == 1);
+        Hotkey.TryParse("Ctrl+Shift+Oem3", out var free);
+        Check("removed character frees its hotkey", app.TrySetCharHotkey(dash.Id, free) is null);
+        Check("em dash back to Alt+-", app.TrySetCharHotkey(dash.Id, dashKey) is null);
     }
 
     private static void InstallerTests()

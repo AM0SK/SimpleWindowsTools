@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SimpleWindowsTools.Core;
 
@@ -21,13 +22,17 @@ public sealed class AppSettings
     // Win key blocker (was disable_btns.ahk)
     public bool WinBlockEnabled { get; set; } = true;
 
-    // Alt + "-" types an em dash (was in Swither-Lng.ahk)
-    public bool EmDashEnabled { get; set; } = true;
+    /// <summary>"Characters": rows of text + hotkey typed in any layout (the em dash is the first by default).</summary>
+    public bool CharsEnabled { get; set; } = true;
+    public List<CharEntry> Chars { get; set; } = new();
+
+    // Before v5 the em dash was a feature of its own. Read once by Migrate(), then dropped from the file.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public bool? EmDashEnabled { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? EmDashHotkey { get; set; }
 
     // Hotkeys, "Ctrl+Alt+F10" style (see Hotkey). Defaults live in HotkeyDefaults.
     public string ToggleOverlayHotkey { get; set; } = HotkeyDefaults.ToggleOverlay;
     public string ToggleWinBlockHotkey { get; set; } = HotkeyDefaults.ToggleWinBlock;
-    public string EmDashHotkey { get; set; } = HotkeyDefaults.EmDash;
     public string ToggleSkipHotkey { get; set; } = HotkeyDefaults.ToggleSkip;
     public string ScreenshotHotkey { get; set; } = HotkeyDefaults.Screenshot;
     public string ExitHotkey { get; set; } = HotkeyDefaults.Exit;
@@ -67,6 +72,14 @@ public sealed class LaunchEntry
     public string Hotkey { get; set; } = "";
 }
 
+/// <summary>One "characters" row: the text to type and its hotkey ("" until the user sets one).</summary>
+public sealed class CharEntry
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
+    public string Text { get; set; } = "";
+    public string Hotkey { get; set; } = "";
+}
+
 /// <summary>The "reset" button in the settings window goes back to these.</summary>
 public static class HotkeyDefaults
 {
@@ -86,7 +99,7 @@ public static class SettingsStore
 
     private static string FilePath => Path.Combine(Folder, "settings.json");
 
-    private const int CurrentVersion = 4;
+    private const int CurrentVersion = 5;
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -105,7 +118,15 @@ public static class SettingsStore
         {
             Log.Error("Settings could not be read, using defaults", ex);
         }
-        return new AppSettings { Version = CurrentVersion };
+        return Fresh();
+    }
+
+    /// <summary>A new install: defaults plus the em dash row.</summary>
+    private static AppSettings Fresh()
+    {
+        var s = new AppSettings { Version = CurrentVersion };
+        s.Chars.Add(new CharEntry { Text = "—", Hotkey = HotkeyDefaults.EmDash });
+        return s;
     }
 
     private static AppSettings Migrate(AppSettings s)
@@ -116,6 +137,15 @@ public static class SettingsStore
         if (s.Version < 3 && string.IsNullOrWhiteSpace(s.Language)) s.Language = "ru";
         // v4: the Russian UI was dropped — Russian users get Ukrainian.
         if (s.Version < 4 && s.Language == "ru") s.Language = "uk";
+        // v5: the em dash became the first row of "characters", with its hotkey and on/off state.
+        if (s.Version < 5)
+        {
+            if (s.Chars.Count == 0)
+                s.Chars.Add(new CharEntry { Text = "—", Hotkey = string.IsNullOrWhiteSpace(s.EmDashHotkey) ? HotkeyDefaults.EmDash : s.EmDashHotkey });
+            s.CharsEnabled = s.EmDashEnabled ?? true;
+        }
+        s.EmDashEnabled = null;
+        s.EmDashHotkey = null;
         s.Version = CurrentVersion;
         return s;
     }

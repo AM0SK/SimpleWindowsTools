@@ -8,6 +8,7 @@ using SimpleWindowsTools.Modules;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 using SimpleWindowsTools.Core;
 
@@ -32,7 +33,7 @@ public partial class SettingsWindow : Window
         WinHotkey.Init(_app, HotkeyId.ToggleWinBlock);
         TaskbarHotkey.Init(_app, HotkeyId.Taskbar);
         BuildLaunchRows();
-        DashHotkey.Init(_app, HotkeyId.EmDash);
+        BuildCharRows();
         ShotHotkey.Init(_app, HotkeyId.Screenshot);
         ExitHotkey.Init(_app, HotkeyId.Exit);
 
@@ -67,7 +68,8 @@ public partial class SettingsWindow : Window
         OverlayOptions.Opacity = s.LayoutOverlayEnabled ? 1 : 0.45;
         WinSwitch.IsChecked = s.WinBlockEnabled;
         TaskbarSwitch.IsChecked = Modules.TaskbarAutoHide.IsOn; // read from Windows: may be changed in its settings
-        DashSwitch.IsChecked = s.EmDashEnabled;
+        CharsSwitch.IsChecked = s.CharsEnabled;
+        CharRows.Opacity = s.CharsEnabled ? 1 : 0.45;
         DurationSlider.Value = s.OverlayDurationMs;
         FontSlider.Value = s.OverlayFontSize;
         DurationText.Text = Loc.F("S.Overlay.Seconds", s.OverlayDurationMs / 1000.0);
@@ -80,7 +82,7 @@ public partial class SettingsWindow : Window
         WinHotkey.Refresh();
         TaskbarHotkey.Refresh();
         foreach (var editor in _launchEditors) editor.Refresh();
-        DashHotkey.Refresh();
+        foreach (var editor in _charEditors) editor.Refresh();
         ShotHotkey.Refresh();
         ShotSwitch.IsChecked = s.ScreenshotEnabled;
         ExitHotkey.Refresh();
@@ -481,6 +483,194 @@ public partial class SettingsWindow : Window
         BuildLaunchRows(recordId: entry.Id); // ask for its hotkey right away
     }
 
+    // ===== Characters =====
+
+    private readonly List<HotkeyEditor> _charEditors = new();
+
+    /// <summary>One row per character: glyph box, name + code, hotkey chip, remove button.</summary>
+    private void BuildCharRows(string? recordId = null)
+    {
+        CharRows.Children.Clear();
+        _charEditors.Clear();
+        foreach (var entry in _app.Chars.ToList())
+        {
+            var row = new Grid { Margin = new Thickness(0, 12, 0, 0) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var glyph = GlyphBox(entry.Text, 30, entry.Text.Length > 2 ? 12 : 16);
+            glyph.VerticalAlignment = VerticalAlignment.Top;
+            glyph.Margin = new Thickness(0, 0, 12, 0);
+
+            var name = new TextBlock { Style = (Style)FindResource("Text"), FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis };
+            if (CharTyper.NameKey(entry.Text) is { } key) name.SetResourceReference(TextBlock.TextProperty, key);
+            else name.SetResourceReference(TextBlock.TextProperty, "S.Chars.Own");
+            var code = new TextBlock
+            {
+                Text = CharTyper.Codes(entry.Text),
+                Style = (Style)FindResource("Muted"),
+                FontFamily = (FontFamily)FindResource("FontMono"),
+                FontSize = 11,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+            };
+            var text = new StackPanel { VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, -1, 12, 0), Children = { name, code } };
+            Grid.SetColumn(text, 1);
+
+            var editor = new HotkeyEditor { VerticalAlignment = VerticalAlignment.Top };
+            editor.InitChar(_app, entry.Id);
+            Grid.SetColumn(editor, 2);
+            _charEditors.Add(editor);
+
+            var id = entry.Id;
+            var remove = new Button
+            {
+                Style = (Style)FindResource("CaptionButton"),
+                Width = 30,
+                Height = 30,
+                Margin = new Thickness(6, 0, 0, 0),
+                FontSize = 12,
+                Content = "\uE74D", // trash can
+                ToolTip = Loc.T("S.Launch.Remove"),
+                VerticalAlignment = VerticalAlignment.Top,
+            };
+            remove.Click += (_, _) => { _app.RemoveChar(id); BuildCharRows(); };
+            Grid.SetColumn(remove, 3);
+
+            row.Children.Add(glyph);
+            row.Children.Add(text);
+            row.Children.Add(editor);
+            row.Children.Add(remove);
+            CharRows.Children.Add(row);
+
+            if (id == recordId) Dispatcher.BeginInvoke(editor.StartRecording, System.Windows.Threading.DispatcherPriority.Input);
+        }
+        CharRows.Visibility = _app.Chars.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        if (PopularChars.Visibility == Visibility.Visible) BuildPopularChars();
+    }
+
+    /// <summary>Square pill with the character in it (invisible spaces get a stand-in).</summary>
+    private Border GlyphBox(string text, double size, double fontSize)
+    {
+        var glyph = new TextBlock
+        {
+            Text = CharTyper.Visible(text),
+            FontSize = fontSize,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+        glyph.SetResourceReference(TextBlock.ForegroundProperty, "Ink");
+        var box = new Border
+        {
+            MinWidth = size,
+            Height = size,
+            MaxWidth = 90,
+            Padding = new Thickness(4, 0, 4, 0),
+            BorderThickness = new Thickness(1),
+            CornerRadius = (CornerRadius)FindResource("RadiusSm"),
+            Child = glyph,
+            ToolTip = CharTyper.Visible(text),
+        };
+        box.SetResourceReference(Border.BackgroundProperty, "PillNeutralBg");
+        box.SetResourceReference(Border.BorderBrushProperty, "PillNeutralRing");
+        return box;
+    }
+
+    /// <summary>Shows / hides the field for an own character (pasted, or typed as a code).</summary>
+    private void AddChar_Click(object sender, RoutedEventArgs e)
+    {
+        bool show = CharInput.Visibility != Visibility.Visible;
+        CharInput.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        if (!show) return;
+        HidePopularChars();
+        CharBox.Text = "";
+        UpdateCharPreview();
+        Dispatcher.BeginInvoke(() => CharBox.Focus(), System.Windows.Threading.DispatcherPriority.Input);
+    }
+
+    private void CharBox_TextChanged(object sender, TextChangedEventArgs e) => UpdateCharPreview();
+
+    private void UpdateCharPreview()
+    {
+        var parsed = CharTyper.ParseInput(CharBox.Text);
+        CharPreview.Text = parsed is null ? "" : CharTyper.Visible(parsed);
+        CharPreview.FontSize = parsed is { Length: > 2 } ? 11 : 18;
+        CharAddButton.IsEnabled = parsed is not null;
+        bool bad = parsed is null && CharBox.Text.Trim().Length > 0;
+        CharHint.SetResourceReference(TextBlock.TextProperty, bad ? "S.Chars.Bad" : "S.Chars.Hint");
+        CharHint.SetResourceReference(TextBlock.ForegroundProperty, bad ? "Warning" : "InkMuted");
+    }
+
+    private void CharBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter) { e.Handled = true; CharConfirm_Click(sender, e); }
+        else if (e.Key == Key.Escape) { e.Handled = true; CharInput.Visibility = Visibility.Collapsed; }
+    }
+
+    private void CharConfirm_Click(object sender, RoutedEventArgs e)
+    {
+        if (CharTyper.ParseInput(CharBox.Text) is not { } text) return;
+        CharInput.Visibility = Visibility.Collapsed;
+        AddCharRow(text);
+    }
+
+    private void AddCharRow(string text)
+    {
+        var entry = _app.AddChar(text);
+        BuildCharRows(recordId: entry.Id); // ask for its hotkey right away
+    }
+
+    private void PopularChars_Click(object sender, RoutedEventArgs e)
+    {
+        if (PopularChars.Visibility == Visibility.Visible) { HidePopularChars(); return; }
+        CharInput.Visibility = Visibility.Collapsed;
+        PopularChars.Visibility = Visibility.Visible;
+        PopularCharsChevron.Text = "\uE70E"; // chevron up
+        BuildPopularChars();
+    }
+
+    private void HidePopularChars()
+    {
+        PopularChars.Visibility = Visibility.Collapsed;
+        PopularCharsChevron.Text = "\uE70D"; // chevron down
+    }
+
+    /// <summary>One chip per popular character; those already in the list are dimmed.</summary>
+    private void BuildPopularChars()
+    {
+        PopularChars.Children.Clear();
+        foreach (var (text, nameKey) in CharTyper.Popular)
+        {
+            bool added = _app.Chars.Any(c => c.Text == text);
+            var chip = new Button
+            {
+                Style = (Style)FindResource("SecondaryButton"),
+                Content = CharTyper.Visible(text),
+                FontSize = 16,
+                FontWeight = FontWeights.Normal,
+                MinWidth = 40,
+                Padding = new Thickness(8, 0, 8, 0),
+                Margin = new Thickness(0, 0, 6, 6),
+                ToolTip = Loc.T(nameKey) + "  ·  " + CharTyper.Codes(text),
+                IsEnabled = !added,
+            };
+            ToolTipService.SetShowOnDisabled(chip, true);
+            var target = text;
+            chip.Click += (_, _) =>
+            {
+                HidePopularChars();
+                AddCharRow(target);
+            };
+            PopularChars.Children.Add(chip);
+        }
+    }
+
+#if DEBUG
+    internal void DebugShowPopularChars() => PopularChars_Click(this, new RoutedEventArgs());
+#endif
+
     /// <summary>One chip per installed input language, in the system order.</summary>
     private void BuildLanguageChips()
     {
@@ -508,7 +698,7 @@ public partial class SettingsWindow : Window
     private void OverlaySwitch_Click(object sender, RoutedEventArgs e) => _app.SetLayoutOverlay(OverlaySwitch.IsChecked == true);
     private void WinSwitch_Click(object sender, RoutedEventArgs e) => _app.SetWinBlock(WinSwitch.IsChecked == true);
     private void TaskbarSwitch_Click(object sender, RoutedEventArgs e) => _app.SetTaskbarAutoHide(TaskbarSwitch.IsChecked == true);
-    private void DashSwitch_Click(object sender, RoutedEventArgs e) => _app.SetEmDash(DashSwitch.IsChecked == true);
+    private void CharsSwitch_Click(object sender, RoutedEventArgs e) => _app.SetChars(CharsSwitch.IsChecked == true);
 
     private void Look_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
     {

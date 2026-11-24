@@ -47,6 +47,17 @@ public partial class HotkeyEditor : UserControl
         Refresh();
     }
 
+    /// <summary>A "characters" row: may have no hotkey yet, no default; matched in the hook, so never "taken".</summary>
+    public void InitChar(AppController app, string charId)
+    {
+        _app = app;
+        _get = () => app.GetCharHotkey(charId);
+        _default = () => null;
+        _taken = () => false;
+        _set = hk => app.TrySetCharHotkey(charId, hk);
+        Refresh();
+    }
+
     /// <summary>Starts recording right away (a launcher row that was just added).</summary>
     public void StartRecording() => Chip_Click(this, new RoutedEventArgs());
 

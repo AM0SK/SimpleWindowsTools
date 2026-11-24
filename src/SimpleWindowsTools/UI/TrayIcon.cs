@@ -32,7 +32,7 @@ public sealed class TrayIcon : IDisposable
         _overlayItem = new ToolStripMenuItem("", null, (_, _) => _app.SetLayoutOverlay(!_app.Settings.LayoutOverlayEnabled));
         _skipItem = new ToolStripMenuItem("", null, (_, _) => _app.SetSkipLanguages(!_app.Settings.SkipLanguagesEnabled, notify: true));
         _winItem = new ToolStripMenuItem("", null, (_, _) => _app.SetWinBlock(!_app.Settings.WinBlockEnabled));
-        _dashItem = new ToolStripMenuItem("", null, (_, _) => _app.SetEmDash(!_app.Settings.EmDashEnabled));
+        _dashItem = new ToolStripMenuItem("", null, (_, _) => _app.SetChars(!_app.Settings.CharsEnabled));
         _taskbarItem = new ToolStripMenuItem("", null, (_, _) => _app.SetTaskbarAutoHide(!Modules.TaskbarAutoHide.IsOn));
 
         _exitItem = new ToolStripMenuItem("", null, (_, _) => _app.RequestExit());
@@ -117,7 +117,7 @@ public sealed class TrayIcon : IDisposable
         _taskbarItem.Checked = Modules.TaskbarAutoHide.IsOn; // Windows' own state, re-read whenever the menu opens
         _taskbarItem.ShortcutKeyDisplayString = _app.GetHotkey(HotkeyId.Taskbar).Display;
         _taskbarItem.ShowShortcutKeys = true;
-        _dashItem.Text = Core.Loc.T("S.Dash.Title");
+        _dashItem.Text = Core.Loc.T("S.Chars.Title");
         _exitItem.Text = Core.Loc.T("T.Exit");
         var update = _app.AvailableUpdate;
         _updateItem.Visible = _updateSeparator.Visible = update is not null;
@@ -126,14 +126,13 @@ public sealed class TrayIcon : IDisposable
         _winItem.Checked = _app.Settings.WinBlockEnabled;
         _skipItem.Checked = _app.Settings.SkipLanguagesEnabled;
         _skipItem.ShortcutKeyDisplayString = _app.GetHotkey(HotkeyId.ToggleSkip).Display;
-        _dashItem.Checked = _app.Settings.EmDashEnabled;
+        _dashItem.Checked = _app.Settings.CharsEnabled;
         _overlayItem.ShortcutKeyDisplayString = _app.GetHotkey(HotkeyId.ToggleOverlay).Display;
         _winItem.ShortcutKeyDisplayString = _app.GetHotkey(HotkeyId.ToggleWinBlock).Display;
-        _dashItem.ShortcutKeyDisplayString = _app.GetHotkey(HotkeyId.EmDash).Display;
         _exitItem.ShortcutKeyDisplayString = _app.GetHotkey(HotkeyId.Exit).Display;
         _shotItem.ShortcutKeyDisplayString = _app.GetHotkey(HotkeyId.Screenshot).Display;
         _shotItem.ShowShortcutKeys = true;
-        foreach (var item in new[] { _overlayItem, _skipItem, _winItem, _dashItem, _exitItem }) item.ShowShortcutKeys = true;
+        foreach (var item in new[] { _overlayItem, _skipItem, _winItem, _exitItem }) item.ShowShortcutKeys = true;
     }
 
     /// <summary>Windows notification ("balloon" → a toast on 10/11). Clicking it opens the updates.</summary>

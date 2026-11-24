@@ -13,6 +13,11 @@ public static class Changelog
 
     public static readonly Release[] Releases =
     {
+        new("0.9.0", new DateOnly(2026, 11, 24), new[]
+        {
+            new[] { "Символи: будь-який символ на своє сполучення клавіш, рядків скільки завгодно. Популярні (тире, лапки, стрілки, ₴…) додаються одним кліком, інші — вставкою або кодом U+XXXX. Довге тире тепер перший рядок і працює як раніше",
+                    "Characters: any character on your own shortcut, as many rows as you like. Popular ones (dashes, quotes, arrows, €…) are one click away, others can be pasted or typed as a U+XXXX code. The em dash is now the first row and works as before" },
+        }),
         new("0.8.0", new DateOnly(2026, 11, 22), new[]
         {
             new[] { "Запуск програм: будь-яка програма, ярлик, файл чи тека за своїм сполученням клавіш. Рядків скільки завгодно",
