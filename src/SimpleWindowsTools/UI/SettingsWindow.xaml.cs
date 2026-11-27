@@ -159,8 +159,14 @@ public partial class SettingsWindow : Window
     private void UpdatePage_Click(object sender, RoutedEventArgs e)
     {
         var url = _app.AvailableUpdate?.PageUrl ?? Updater.ReleasesUrl;
-        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true }); }
+        try { Modules.AppLauncher.OpenUrl(url); }
         catch (Exception ex) { Log.Error("Opening the release page failed", ex); }
+    }
+
+    private void RepoLink_Click(object sender, RoutedEventArgs e)
+    {
+        try { Modules.AppLauncher.OpenUrl(Updater.RepoUrl); }
+        catch (Exception ex) { Log.Error("Opening the GitHub page failed", ex); }
     }
 
     /// <summary>The history list scrolls inside the page; at its top/bottom the wheel goes on to the page.</summary>

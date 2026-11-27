@@ -63,11 +63,11 @@ The last color, thickness, text size, blur strength, tool order and save folder 
 
 ![Layout pill](docs/screenshots/layout-pill.png)
 
-### Settings: app tab
+### Settings tab
 
-The second tab has the interface language, start with Windows, and updates with the update history.
+The second tab has the interface language, start with Windows, updates with the update history, and a link to this page.
 
-![Settings, app tab](docs/screenshots/settings-app.png)
+![Settings tab](docs/screenshots/settings-app.png)
 
 ## Requirements
 
@@ -95,7 +95,7 @@ Settings are kept in `%APPDATA%\SimpleWindowsTools\settings.json`.
 ## Updates
 
 The app checks GitHub Releases every few hours and shows a Windows notification when a new version is out.
-Open the settings → **App** → **Download and install** (or click the notification): it downloads the newest
+Open the settings → **Settings** → **Download and install** (or click the notification): it downloads the newest
 installer from this repository and runs it, and the installer updates the app in place and starts it again.
 Nothing is installed without your click.
 

@@ -13,7 +13,12 @@ public static class Changelog
 
     public static readonly Release[] Releases =
     {
-        new("0.9.0", new DateOnly(2026, 11, 24), new[]
+        new("0.9.1", new DateOnly(2026, 11, 27), new[]
+        {
+            new[] { "Вкладка «Програма» тепер називається «Налаштування», внизу — посилання на сторінку проєкту на GitHub",
+                    "The “App” tab is now called “Settings”, with a link to the project's GitHub page at the bottom" },
+        }),
+        new("0.9.0",new DateOnly(2026, 11, 24), new[]
         {
             new[] { "Символи: будь-який символ на своє сполучення клавіш, рядків скільки завгодно. Популярні (тире, лапки, стрілки, ₴…) додаються одним кліком, інші — вставкою або кодом U+XXXX. Довге тире тепер перший рядок і працює як раніше",
                     "Characters: any character on your own shortcut, as many rows as you like. Popular ones (dashes, quotes, arrows, €…) are one click away, others can be pasted or typed as a U+XXXX code. The em dash is now the first row and works as before" },

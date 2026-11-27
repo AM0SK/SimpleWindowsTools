@@ -400,6 +400,12 @@
 
                         <TextBlock x:Name="VersionText" Style="{StaticResource Text}" Foreground="{DynamicResource InkFaint}" FontSize="11.5"
                                    Margin="4,4,0,0" />
+                        <TextBlock Style="{StaticResource Text}" FontSize="11.5" Margin="4,4,0,0">
+                            <Hyperlink x:Name="RepoLink" Click="RepoLink_Click" Foreground="{DynamicResource AccentSolid}"
+                                       ToolTip="https://github.com/AM0SK/SimpleWindowsTools">
+                                <Run Text="{DynamicResource S.Repo}" />
+                            </Hyperlink>
+                        </TextBlock>
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>

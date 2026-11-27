@@ -35,6 +35,17 @@ public static class AppLauncher
         ShellExecuteAsUser(path, arguments ?? "", dir, show);
     }
 
+    /// <summary>Opens a web page in the default browser, un-elevated (falls back to a plain start).</summary>
+    public static void OpenUrl(string url)
+    {
+        if (IsElevated())
+        {
+            try { ShellExecuteAsUser(url, "", "", 1); return; }
+            catch (Exception ex) { Log.Info($"Opening {url} through Explorer failed: {ex.Message}"); }
+        }
+        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+    }
+
     /// <summary>
     /// Built-in Windows programs offered with one click (Calculator is a Store app with no shortcut to
     /// browse to, so people can't find it otherwise). Name key in Loc + path; only those present are shown.
